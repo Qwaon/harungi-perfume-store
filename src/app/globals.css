@@ -1,0 +1,120 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-cormorant: 'Cormorant Garamond', Georgia, serif;
+  --font-inter: 'Inter', system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #F5F5F5;
+  color: #0A0A0A;
+  font-family: var(--font-inter);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* iOS momentum scroll */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Remove tap highlight on all interactive elements */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent double-tap zoom on buttons and links */
+button, a, [role="button"] {
+  touch-action: manipulation;
+}
+
+/* Prevent iOS keyboard zoom on input focus (font-size must be >= 16px) */
+@supports (-webkit-touch-callout: none) {
+  input, select, textarea {
+    font-size: 16px;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #F5F5F5;
+}
+::-webkit-scrollbar-thumb {
+  background: #BBBBBB;
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #888888;
+}
+
+/* Selection */
+::selection {
+  background-color: #0A0A0A18;
+  color: #0A0A0A;
+}
+
+/* Range input */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 2px;
+  background: #E8E8E8;
+  border-radius: 99px;
+  outline: none;
+}
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #0A0A0A;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+input[type='range']::-webkit-slider-thumb:hover {
+  transform: scale(1.25);
+}
+
+/* Utilities */
+.text-balance {
+  text-wrap: balance;
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 bg-ink-900 text-white px-8 py-3.5
+           text-sm tracking-widest uppercase font-body font-medium rounded-lg
+           transition-all duration-200
+           hover:bg-ink-700 hover:shadow-lg hover:-translate-y-px
+           active:scale-[0.98] active:shadow-none;
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 border border-ink-900 text-ink-900 px-8 py-3.5
+           text-sm tracking-widest uppercase font-body font-medium rounded-lg
+           transition-all duration-200
+           hover:bg-ink-900 hover:text-white hover:shadow-lg hover:-translate-y-px
+           active:scale-[0.98] active:shadow-none;
+  }
+
+  .section-title {
+    @apply font-display text-3xl sm:text-4xl md:text-5xl font-light tracking-tight text-ink-900;
+  }
+
+  .label {
+    @apply text-xs tracking-widest uppercase text-ink-300 font-body;
+  }
+
+  .input-base {
+    @apply w-full bg-white border border-cream-200 px-4 py-3 text-sm text-ink-900
+           placeholder:text-ink-300 focus:outline-none focus:border-ink-700 focus:ring-2 focus:ring-ink-900/10
+           transition-all duration-200 rounded-lg;
+  }
+}
