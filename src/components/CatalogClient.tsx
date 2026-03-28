@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProductCard from './ProductCard';
 import { Perfume, FilterState } from '@/types';
@@ -8,7 +9,6 @@ import { brands, genders, scentTypes, formats } from '@/data/perfumes';
 
 interface Props {
   perfumes: Perfume[];
-  initialFormat?: string;
 }
 
 const EMPTY_FILTERS: FilterState = { brand: '', gender: '', scentType: '', format: '' };
@@ -116,7 +116,9 @@ function Pill({ label, active, onClick }: { label: string; active: boolean; onCl
   );
 }
 
-export default function CatalogClient({ perfumes, initialFormat = '' }: Props) {
+export default function CatalogClient({ perfumes }: Props) {
+  const searchParams = useSearchParams();
+  const initialFormat = searchParams.get('format') ?? '';
   const [filters, setFilters] = useState<FilterState>({ ...EMPTY_FILTERS, format: initialFormat });
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [search, setSearch] = useState('');

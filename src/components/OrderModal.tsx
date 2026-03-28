@@ -30,22 +30,20 @@ export default function OrderModal({ isOpen, onClose, perfumeName, perfumeId, br
   const [status, setStatus] = useState<Status>('idle');
   const [errorMsg, setErrorMsg] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !contact.trim()) return;
-    setStatus('loading');
-    try {
-      const res = await fetch('/api/order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), contact: contact.trim(), perfumeId, perfumeName, brand, volume, price }),
-      });
-      if (!res.ok) throw new Error();
-      setStatus('success');
-    } catch {
-      setStatus('error');
-      setErrorMsg('Не удалось отправить заявку. Попробуйте ещё раз.');
-    }
+    const msg = [
+      `Хочу заказать:`,
+      `${brand} — ${perfumeName}`,
+      `Объём: ${volumeLabels[volume]}`,
+      `Цена: ${price.toLocaleString('ru-RU')} ₽`,
+      ``,
+      `Имя: ${name.trim()}`,
+      `Контакт: ${contact.trim()}`,
+    ].join('\n');
+    window.open(`https://t.me/alsharkisia?text=${encodeURIComponent(msg)}`, '_blank');
+    setStatus('success');
   };
 
   const handleClose = () => {

@@ -2,7 +2,9 @@ import { notFound } from 'next/navigation';
 import { perfumes } from '@/data/perfumes';
 import ProductPageClient from '@/components/ProductPageClient';
 
-export const dynamic = 'force-dynamic';
+export async function generateStaticParams() {
+  return perfumes.map((p) => ({ id: p.id }));
+}
 
 interface Props {
   params: { id: string };
