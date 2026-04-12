@@ -3,79 +3,163 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
+// Inline SVG bottle icons adapted for dark background
+// fill="white" for bottle paths, masking rect matches dark background (#0A0A0A)
+function BottleIcon2ml() {
+  return (
+    <svg width="52" height="52" viewBox="0 0 230 230" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M162.822 106.765H67.1847C65.705 106.765 64.5343 108.13 64.8371 109.592C69.5328 135.633 69.7246 162.034 65.4121 188.075C63.7684 197.838 71.2223 206.81 81.2241 206.81H148.783C158.801 206.81 166.235 197.816 164.595 188.075C160.283 162.034 160.474 135.633 165.17 109.592C165.472 108.126 164.296 106.765 162.822 106.765ZM92.8908 44.5005C93.8252 48.7407 97.5384 51.7114 101.875 51.7114H128.132C132.468 51.7114 136.181 48.7407 137.115 44.5005L142.937 18.435C143.728 14.8889 142.362 11.1999 139.464 9.01986C123.221 -3.00662 106.786 -3.00662 90.5432 9.01986C87.6444 11.1999 86.2787 14.8889 87.0698 18.435L92.8908 44.5005Z" fill="rgba(255,255,255,0.85)"/>
+      <path d="M181.263 99.3154C182.269 95.1709 181.407 90.9064 178.891 87.6006L170.315 76.2929C167.703 72.891 163.607 70.8546 159.342 70.8546H143.147V68.0996C143.147 63.0207 139.026 58.8758 133.923 58.8758H127.407V56.5039H102.587V58.8758H96.071C90.9679 58.8758 86.8472 63.0203 86.8472 68.0996V70.8546H70.652C66.3875 70.8546 62.2911 72.891 59.6794 76.2929L51.1029 87.6006C48.5872 90.9064 47.7247 95.1709 48.731 99.3154C56.8762 132.759 56.8762 168.096 48.731 201.54C47.7247 205.661 48.5872 209.949 51.1029 213.255L59.6794 224.562C62.2664 227.964 66.3871 230.001 70.652 230.001H159.341C163.605 230.001 167.725 227.964 170.313 224.562L178.89 213.255C181.405 209.949 182.268 205.66 181.262 201.54C173.118 168.096 173.118 132.759 181.263 99.3154ZM175.082 210.356L166.482 221.664C164.805 223.892 162.122 225.209 159.343 225.209H70.6538C67.8749 225.209 65.1917 223.892 63.5148 221.664L54.9145 210.356C53.2856 208.2 52.7102 205.397 53.3818 202.666C61.7188 168.503 61.7188 132.376 53.3818 98.1887C52.7111 95.4575 53.2856 92.6548 54.9145 90.4985L63.5148 79.1908C65.1917 76.9627 67.8749 75.6451 70.6538 75.6451H105.104V77.2502C105.104 81.874 108.29 85.7552 112.603 86.8091V101.974H117.394V86.8091C121.706 85.7548 124.893 81.8735 124.893 77.2502V75.6451H159.343C162.122 75.6451 164.805 76.9627 166.482 79.1908L175.082 90.4985C176.711 92.6548 177.287 95.4575 176.615 98.1887C168.278 132.375 168.278 168.503 176.615 202.666C177.287 205.397 176.711 208.2 175.082 210.356Z" fill="rgba(255,255,255,0.85)"/>
+      {/* Masking rect — covers top ~50% of bottle body = 2ml fill level */}
+      <rect x="65" y="103" width="100" height="50" fill="#0A0A0A"/>
+    </svg>
+  );
+}
+
+function BottleIcon5ml() {
+  return (
+    <svg width="52" height="52" viewBox="0 0 230 230" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M162.822 106.765H67.1847C65.705 106.765 64.5343 108.13 64.8371 109.592C69.5328 135.633 69.7246 162.034 65.4121 188.075C63.7684 197.838 71.2223 206.81 81.2241 206.81H148.783C158.801 206.81 166.235 197.816 164.595 188.075C160.283 162.034 160.474 135.633 165.17 109.592C165.472 108.126 164.296 106.765 162.822 106.765ZM92.8908 44.5005C93.8252 48.7407 97.5384 51.7114 101.875 51.7114H128.132C132.468 51.7114 136.181 48.7407 137.115 44.5005L142.937 18.435C143.728 14.8889 142.362 11.1999 139.464 9.01986C123.221 -3.00662 106.786 -3.00662 90.5432 9.01986C87.6444 11.1999 86.2787 14.8889 87.0698 18.435L92.8908 44.5005Z" fill="rgba(255,255,255,0.85)"/>
+      <path d="M181.263 99.3154C182.269 95.1709 181.407 90.9064 178.891 87.6006L170.315 76.2929C167.703 72.891 163.607 70.8546 159.342 70.8546H143.147V68.0996C143.147 63.0207 139.026 58.8758 133.923 58.8758H127.407V56.5039H102.587V58.8758H96.071C90.9679 58.8758 86.8472 63.0203 86.8472 68.0996V70.8546H70.652C66.3875 70.8546 62.2911 72.891 59.6794 76.2929L51.1029 87.6006C48.5872 90.9064 47.7247 95.1709 48.731 99.3154C56.8762 132.759 56.8762 168.096 48.731 201.54C47.7247 205.661 48.5872 209.949 51.1029 213.255L59.6794 224.562C62.2664 227.964 66.3871 230.001 70.652 230.001H159.341C163.605 230.001 167.725 227.964 170.313 224.562L178.89 213.255C181.405 209.949 182.268 205.66 181.262 201.54C173.118 168.096 173.118 132.759 181.263 99.3154ZM175.082 210.356L166.482 221.664C164.805 223.892 162.122 225.209 159.343 225.209H70.6538C67.8749 225.209 65.1917 223.892 63.5148 221.664L54.9145 210.356C53.2856 208.2 52.7102 205.397 53.3818 202.666C61.7188 168.503 61.7188 132.376 53.3818 98.1887C52.7111 95.4575 53.2856 92.6548 54.9145 90.4985L63.5148 79.1908C65.1917 76.9627 67.8749 75.6451 70.6538 75.6451H105.104V77.2502C105.104 81.874 108.29 85.7552 112.603 86.8091V101.974H117.394V86.8091C121.706 85.7548 124.893 81.8735 124.893 77.2502V75.6451H159.343C162.122 75.6451 164.805 76.9627 166.482 79.1908L175.082 90.4985C176.711 92.6548 177.287 95.4575 176.615 98.1887C168.278 132.375 168.278 168.503 176.615 202.666C177.287 205.397 176.711 208.2 175.082 210.356Z" fill="rgba(255,255,255,0.85)"/>
+      {/* Masking rect — covers top ~25% = 5ml fill level */}
+      <rect x="65" y="106" width="100" height="25" fill="#0A0A0A"/>
+    </svg>
+  );
+}
+
+function BottleIcon10ml() {
+  return (
+    <svg width="52" height="52" viewBox="0 0 230 230" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M162.822 106.765H67.1847C65.705 106.765 64.5343 108.13 64.8371 109.592C69.5328 135.633 69.7246 162.034 65.4121 188.075C63.7684 197.838 71.2223 206.81 81.2241 206.81H148.783C158.801 206.81 166.235 197.816 164.595 188.075C160.283 162.034 160.474 135.633 165.17 109.592C165.472 108.126 164.296 106.765 162.822 106.765ZM92.8908 44.5005C93.8252 48.7407 97.5384 51.7114 101.875 51.7114H128.132C132.468 51.7114 136.181 48.7407 137.115 44.5005L142.937 18.435C143.728 14.8889 142.362 11.1999 139.464 9.01986C123.221 -3.00662 106.786 -3.00662 90.5432 9.01986C87.6444 11.1999 86.2787 14.8889 87.0698 18.435L92.8908 44.5005Z" fill="rgba(255,255,255,0.85)"/>
+      <path d="M181.263 99.3154C182.269 95.1709 181.407 90.9064 178.891 87.6006L170.315 76.2929C167.703 72.891 163.607 70.8546 159.342 70.8546H143.147V68.0996C143.147 63.0207 139.026 58.8758 133.923 58.8758H127.407V56.5039H102.587V58.8758H96.071C90.9679 58.8758 86.8472 63.0203 86.8472 68.0996V70.8546H70.652C66.3875 70.8546 62.2911 72.891 59.6794 76.2929L51.1029 87.6006C48.5872 90.9064 47.7247 95.1709 48.731 99.3154C56.8762 132.759 56.8762 168.096 48.731 201.54C47.7247 205.661 48.5872 209.949 51.1029 213.255L59.6794 224.562C62.2664 227.964 66.3871 230.001 70.652 230.001H159.341C163.605 230.001 167.725 227.964 170.313 224.562L178.89 213.255C181.405 209.949 182.268 205.66 181.262 201.54C173.118 168.096 173.118 132.759 181.263 99.3154ZM175.082 210.356L166.482 221.664C164.805 223.892 162.122 225.209 159.343 225.209H70.6538C67.8749 225.209 65.1917 223.892 63.5148 221.664L54.9145 210.356C53.2856 208.2 52.7102 205.397 53.3818 202.666C61.7188 168.503 61.7188 132.376 53.3818 98.1887C52.7111 95.4575 53.2856 92.6548 54.9145 90.4985L63.5148 79.1908C65.1917 76.9627 67.8749 75.6451 70.6538 75.6451H105.104V77.2502C105.104 81.874 108.29 85.7552 112.603 86.8091V101.974H117.394V86.8091C121.706 85.7548 124.893 81.8735 124.893 77.2502V75.6451H159.343C162.122 75.6451 164.805 76.9627 166.482 79.1908L175.082 90.4985C176.711 92.6548 177.287 95.4575 176.615 98.1887C168.278 132.375 168.278 168.503 176.615 202.666C177.287 205.397 176.711 208.2 175.082 210.356Z" fill="rgba(255,255,255,0.85)"/>
+      {/* No masking — full bottle = 10ml */}
+    </svg>
+  );
+}
+
+const volumes = [
+  {
+    ml: '2 мл',
+    usage: '~20 нанесений',
+    desc: 'Знакомство с ароматом',
+    price: 'от 300 ₽',
+    icon: <BottleIcon2ml />,
+  },
+  {
+    ml: '5 мл',
+    usage: '~50 нанесений',
+    desc: 'На неделю-две',
+    price: 'от 650 ₽',
+    icon: <BottleIcon5ml />,
+  },
+  {
+    ml: '10 мл',
+    usage: '~100 нанесений',
+    desc: 'На месяц и более',
+    price: 'от 1 200 ₽',
+    icon: <BottleIcon10ml />,
+  },
+];
+
 export default function DecantsBanner() {
   return (
     <section className="bg-ink-900 overflow-hidden relative">
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-16 md:py-28 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 items-center">
-        {/* Text */}
-        <div>
-          <motion.p
-            className="label text-ink-300 mb-5"
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            Распивы
-          </motion.p>
-          <motion.h2
-            className="font-display text-5xl md:text-6xl font-light text-white leading-tight mb-6"
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-          >
-            Попробуйте<br />
-            <span className="italic text-white/70">прежде,</span><br />
-            чем купить
-          </motion.h2>
-          <motion.p
-            className="text-ink-300 text-base leading-relaxed max-w-md mb-10"
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            Распивы — идеальный способ познакомиться с нишевым ароматом. Разливаем из оригинальных флаконов. Объём от 2 мл.
-          </motion.p>
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-          >
-            <Link
-              href="/catalog?format=распив"
-              className="inline-flex items-center gap-2.5 bg-white text-ink-900 px-8 py-3.5 text-sm tracking-widest uppercase font-medium rounded-lg transition-all duration-200 hover:bg-cream-100 hover:shadow-lg hover:-translate-y-px active:scale-[0.98]"
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-24 md:py-36">
+        {/* Header */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start mb-16 md:mb-24">
+          <div>
+            <motion.p
+              className="label text-gold-400 mb-5"
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
             >
-              Смотреть распивы
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </Link>
+              Распивы
+            </motion.p>
+            <motion.h2
+              className="font-display text-4xl sm:text-5xl md:text-6xl font-light text-white leading-tight mb-6 text-balance"
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+            >
+              Попробуйте<br />
+              <span className="italic text-cream-300">прежде,</span> чем купить
+            </motion.h2>
+            <motion.p
+              className="text-cream-300/70 text-base md:text-lg leading-relaxed max-w-md mb-10 text-pretty"
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              Распив — это отливант из оригинального запечатанного флакона в стерильный атомайзер. Вы получаете тот самый аромат, но в удобном формате для знакомства.
+            </motion.p>
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+            >
+              <Link
+                href="/catalog?format=распив"
+                className="inline-flex items-center gap-2.5 bg-cream-50 text-ink-900 px-8 py-3.5 text-sm tracking-widest uppercase font-medium rounded-full transition-all duration-200 hover:bg-white hover:-translate-y-px active:scale-[0.98] cursor-pointer"
+                style={{ boxShadow: '0px 0px 0px 1px rgba(209,207,197,0.3)' }}
+              >
+                Смотреть распивы
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </Link>
+            </motion.div>
+          </div>
+
+          {/* What is a decant — explanation */}
+          <motion.div
+            className="border border-white/10 rounded-2xl p-6 sm:p-8 bg-white/[0.03]"
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <p className="label text-gold-400 mb-4">Как это работает</p>
+            <div className="flex flex-col gap-5">
+              {[
+                { num: '01', text: 'Вы выбираете аромат и нужный объём' },
+                { num: '02', text: 'Мы вскрываем оригинальный флакон и разливаем в чистый атомайзер' },
+                { num: '03', text: 'Отправляем в надёжной упаковке — аромат доедет в целости' },
+              ].map((step) => (
+                <div key={step.num} className="flex gap-4 items-start">
+                  <span className="font-display text-2xl font-light text-gold-400/50 leading-none mt-0.5">{step.num}</span>
+                  <p className="text-sm text-cream-300/80 leading-relaxed text-pretty">{step.text}</p>
+                </div>
+              ))}
+            </div>
           </motion.div>
         </div>
 
-        {/* Volume cards */}
+        {/* Volume comparison cards */}
         <motion.div
-          className="grid grid-cols-3 gap-4"
-          initial={{ opacity: 0, x: 30 }}
-          whileInView={{ opacity: 1, x: 0 }}
+          className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.8, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
         >
-          {[
-            { volume: '2 мл', desc: 'Знакомство', price: 'от 300 ₽' },
-            { volume: '5 мл', desc: 'На неделю', price: 'от 650 ₽' },
-            { volume: '10 мл', desc: 'На месяц', price: 'от 1 200 ₽' },
-          ].map((item) => (
+          {volumes.map((item) => (
             <div
-              key={item.volume}
-              className="border border-white/10 rounded-xl p-3 sm:p-5 text-center hover:border-white/30 hover:bg-white/5 transition-all duration-300"
+              key={item.ml}
+              className="border border-white/10 rounded-2xl p-6 sm:p-8 hover:border-white/20 hover:bg-white/[0.03] transition-all duration-300 flex flex-col items-center text-center"
             >
-              <p className="font-display text-2xl sm:text-3xl font-light text-white mb-2">{item.volume}</p>
-              <p className="label text-ink-300 mb-3">{item.desc}</p>
-              <p className="text-xs text-white/50 font-medium">{item.price}</p>
+              {/* SVG bottle icon */}
+              <div className="mb-5 opacity-90">
+                {item.icon}
+              </div>
+              <p className="font-display text-3xl sm:text-4xl font-light text-white mb-1 tabular-nums">{item.ml}</p>
+              <p className="text-xs text-gold-400 mb-3">{item.usage}</p>
+              <p className="text-sm text-cream-300/60 mb-4">{item.desc}</p>
+              <p className="text-sm text-white font-medium">{item.price}</p>
             </div>
           ))}
         </motion.div>

@@ -1,8 +1,9 @@
 import Link from 'next/link';
+import { TELEGRAM_URL } from '@/lib/constants';
 
 export default function Footer() {
   return (
-    <footer className="bg-ink-900 text-cream-300 mt-24">
+    <footer className="bg-ink-900 text-cream-300" style={{ borderTop: '1px solid #30302e' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-16 grid grid-cols-1 md:grid-cols-3 gap-12">
         {/* Brand */}
         <div>
@@ -27,6 +28,12 @@ export default function Footer() {
             <Link href="/about" className="text-sm text-cream-200 hover:text-white transition-colors duration-200">
               О нас
             </Link>
+            <Link href="/how-it-works" className="text-sm text-cream-200 hover:text-white transition-colors duration-200">
+              Как мы работаем
+            </Link>
+            <Link href="/faq" className="text-sm text-cream-200 hover:text-white transition-colors duration-200">
+              FAQ
+            </Link>
           </div>
         </div>
 
@@ -35,7 +42,7 @@ export default function Footer() {
           <p className="label text-ink-300 mb-5">Контакты</p>
           <div className="flex flex-col gap-3">
             <a
-              href="https://t.me/alsharkisia"
+              href={TELEGRAM_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2.5 text-white text-sm font-medium px-5 py-3 rounded-xl transition-all duration-200 hover:opacity-90 hover:-translate-y-px hover:shadow-lg w-fit"

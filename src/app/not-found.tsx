@@ -11,7 +11,7 @@ export default function NotFound() {
       <h1 className="font-display text-5xl md:text-7xl font-light text-ink-900 mb-6">
         Страница не найдена
       </h1>
-      <p className="text-ink-400 text-base mb-10 max-w-sm leading-relaxed">
+      <p className="text-ink-500 text-base mb-10 max-w-sm leading-relaxed">
         Такой страницы не существует. Возможно, она была перемещена или удалена.
       </p>
       <div className="flex flex-col sm:flex-row gap-4">

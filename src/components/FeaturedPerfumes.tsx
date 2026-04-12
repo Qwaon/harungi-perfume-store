@@ -11,12 +11,12 @@ interface Props {
 
 export default function FeaturedPerfumes({ perfumes }: Props) {
   return (
-    <section className="max-w-7xl mx-auto px-4 sm:px-6 py-20 md:py-32">
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 py-24 md:py-36">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-14">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
         <div>
           <motion.p
-            className="label text-ink-300 mb-3"
+            className="label text-gold-500 mb-3"
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -46,8 +46,8 @@ export default function FeaturedPerfumes({ perfumes }: Props) {
         </motion.div>
       </div>
 
-      {/* Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-5 md:gap-7">
+      {/* Grid — 3 columns on desktop, 2 on tablet, 1 on mobile */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
         {perfumes.map((p, i) => (
           <ProductCard key={p.id} perfume={p} index={i} />
         ))}

@@ -10,23 +10,22 @@ const config: Config = {
     extend: {
       colors: {
         cream: {
-          50:  '#FFFFFF',
-          100: '#F5F5F5',
-          200: '#E8E8E8',
-          300: '#D0D0D0',
+          50:  '#faf9f5',   // ivory — карточки, поверхности
+          100: '#f5f4ed',   // parchment — фон страницы
+          200: '#e8e6dc',   // warm border — границы, разделители
+          300: '#d1cfc5',   // ring — мягкие разделители
         },
-        // gold remapped to neutral grays (B&W palette)
         gold: {
-          400: '#888888',
-          500: '#555555',
-          600: '#222222',
+          400: '#7a8a5c',   // olive light — hover, вторичный
+          500: '#5c6b3f',   // olive — бренд-акцент, лейблы
+          600: '#4a5732',   // olive dark — pressed
         },
         ink: {
-          900: '#0A0A0A',
-          800: '#1A1A1A',
-          700: '#2D2D2D',
-          500: '#555555',
-          300: '#999999',
+          900: '#141413',   // near-black — основной текст, CTA
+          800: '#1e1e1c',   // dark alt
+          700: '#30302e',   // dark surface — тёмные секции
+          500: '#5e5d59',   // olive gray — вторичный текст
+          300: '#87867f',   // stone gray — третичный текст
         },
       },
       fontFamily: {

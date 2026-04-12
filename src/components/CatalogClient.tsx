@@ -1,21 +1,23 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProductCard from './ProductCard';
 import { Perfume, FilterState } from '@/types';
-import { brands, genders, scentTypes, formats } from '@/data/perfumes';
+import { brands, genders, scentTypes, formats, seasons, intensities } from '@/data/perfumes';
 
 interface Props {
   perfumes: Perfume[];
 }
 
-const EMPTY_FILTERS: FilterState = { brand: '', gender: '', scentType: '', format: '' };
-type SortOption = 'default' | 'price_asc' | 'price_desc' | 'new';
+const EMPTY_FILTERS: FilterState = { brand: '', gender: '', scentType: '', format: '', season: '', intensity: '' };
+type SortOption = 'default' | 'popular' | 'price_asc' | 'price_desc' | 'new';
+const PAGE_SIZE = 9;
 
 const SORT_LABELS: Record<SortOption, string> = {
   default: 'По умолчанию',
+  popular: 'Популярные',
   price_asc: 'Цена: дешевле',
   price_desc: 'Цена: дороже',
   new: 'Новинки',
@@ -54,7 +56,7 @@ function FilterSection({
             animate={{ rotate: open ? 180 : 0 }}
             transition={{ duration: 0.25 }}
           >
-            <path d="M2 5l5 5 5-5" stroke="#999" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M2 5l5 5 5-5" stroke="#87867f" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </motion.svg>
         </div>
       </button>
@@ -108,7 +110,7 @@ function Pill({ label, active, onClick }: { label: string; active: boolean; onCl
       className={`px-3.5 py-1.5 text-xs rounded-full border font-medium transition-all duration-150 ${
         active
           ? 'bg-ink-900 text-white border-ink-900 shadow-sm'
-          : 'bg-white text-ink-500 border-cream-200 hover:border-ink-500 hover:text-ink-900'
+          : 'bg-cream-50 text-ink-500 border-cream-200 hover:border-ink-500 hover:text-ink-900'
       }`}
     >
       {label}
@@ -116,52 +118,29 @@ function Pill({ label, active, onClick }: { label: string; active: boolean; onCl
   );
 }
 
-export default function CatalogClient({ perfumes }: Props) {
-  const searchParams = useSearchParams();
-  const initialFormat = searchParams.get('format') ?? '';
-  const [filters, setFilters] = useState<FilterState>({ ...EMPTY_FILTERS, format: initialFormat });
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [search, setSearch] = useState('');
-  const [sort, setSort] = useState<SortOption>('default');
-  const [priceMin, setPriceMin] = useState('');
-  const [priceMax, setPriceMax] = useState('');
+interface FilterContentProps {
+  activeFilterCount: number;
+  priceMin: string;
+  priceMax: string;
+  setPriceMin: (v: string) => void;
+  setPriceMax: (v: string) => void;
+  filters: FilterState;
+  setFilter: (key: keyof FilterState, value: string) => void;
+  clearAll: () => void;
+}
 
-  const setFilter = (key: keyof FilterState, value: string) =>
-    setFilters((prev) => ({ ...prev, [key]: prev[key] === value ? '' : value }));
-
-  const clearAll = () => { setFilters(EMPTY_FILTERS); setSearch(''); setSort('default'); setPriceMin(''); setPriceMax(''); };
-
+function FilterContent({
+  activeFilterCount,
+  priceMin,
+  priceMax,
+  setPriceMin,
+  setPriceMax,
+  filters,
+  setFilter,
+  clearAll,
+}: FilterContentProps) {
   const priceActive = priceMin !== '' || priceMax !== '';
-
-  const activeFilterCount =
-    Object.values(filters).filter(Boolean).length +
-    (search ? 1 : 0) +
-    (priceActive ? 1 : 0);
-
-  const filtered = useMemo(() => {
-    const minVal = priceMin ? parseInt(priceMin) : 0;
-    const maxVal = priceMax ? parseInt(priceMax) : Infinity;
-    let result = perfumes.filter((p) => {
-      if (filters.brand && p.brand !== filters.brand) return false;
-      if (filters.gender && p.gender !== filters.gender) return false;
-      if (filters.scentType && p.scentType !== filters.scentType) return false;
-      if (filters.format && p.format !== filters.format) return false;
-      const minP = Math.min(...Object.values(p.prices));
-      if (minVal > 0 && minP < minVal) return false;
-      if (maxVal < Infinity && minP > maxVal) return false;
-      if (search) {
-        const q = search.toLowerCase();
-        if (!p.name.toLowerCase().includes(q) && !p.brand.toLowerCase().includes(q)) return false;
-      }
-      return true;
-    });
-    if (sort === 'price_asc') result = [...result].sort((a, b) => Math.min(...Object.values(a.prices)) - Math.min(...Object.values(b.prices)));
-    if (sort === 'price_desc') result = [...result].sort((a, b) => Math.min(...Object.values(b.prices)) - Math.min(...Object.values(a.prices)));
-    if (sort === 'new') result = [...result].sort((a, b) => (b.newArrival ? 1 : 0) - (a.newArrival ? 1 : 0));
-    return result;
-  }, [perfumes, filters, search, sort, priceMin, priceMax]);
-
-  const FilterContent = () => (
+  return (
     <div>
       {activeFilterCount > 0 && (
         <button
@@ -237,6 +216,24 @@ export default function CatalogClient({ perfumes }: Props) {
         </div>
       </FilterSection>
 
+      {/* Season */}
+      <FilterSection title="Сезон" activeCount={filters.season ? 1 : 0} defaultOpen={false}>
+        <div className="flex flex-wrap gap-2">
+          {seasons.map((s) => (
+            <Pill key={s} label={s} active={filters.season === s} onClick={() => setFilter('season', s)} />
+          ))}
+        </div>
+      </FilterSection>
+
+      {/* Intensity */}
+      <FilterSection title="Интенсивность" activeCount={filters.intensity ? 1 : 0} defaultOpen={false}>
+        <div className="flex flex-wrap gap-2">
+          {intensities.map((i) => (
+            <Pill key={i} label={i} active={filters.intensity === i} onClick={() => setFilter('intensity', i)} />
+          ))}
+        </div>
+      </FilterSection>
+
       {/* Brand */}
       <FilterSection title="Бренд" activeCount={filters.brand ? 1 : 0} defaultOpen={false}>
         <div className="flex flex-col max-h-48 overflow-y-auto pr-1">
@@ -247,6 +244,75 @@ export default function CatalogClient({ perfumes }: Props) {
       </FilterSection>
     </div>
   );
+}
+
+export default function CatalogClient({ perfumes }: Props) {
+  const searchParams = useSearchParams();
+  const initialFormat = searchParams.get('format') ?? '';
+  const [filters, setFilters] = useState<FilterState>({ ...EMPTY_FILTERS, format: initialFormat });
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState<SortOption>('default');
+  const [priceMin, setPriceMin] = useState('');
+  const [priceMax, setPriceMax] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const setFilter = (key: keyof FilterState, value: string) =>
+    setFilters((prev) => ({ ...prev, [key]: prev[key] === value ? '' : value }));
+
+  const clearAll = () => { setFilters(EMPTY_FILTERS); setSearch(''); setSort('default'); setPriceMin(''); setPriceMax(''); };
+
+  const priceActive = priceMin !== '' || priceMax !== '';
+
+  const activeFilterCount =
+    Object.values(filters).filter(Boolean).length +
+    (search ? 1 : 0) +
+    (priceActive ? 1 : 0);
+
+  const filtered = useMemo(() => {
+    const minVal = priceMin ? parseInt(priceMin) : 0;
+    const maxVal = priceMax ? parseInt(priceMax) : Infinity;
+    let result = perfumes.filter((p) => {
+      if (filters.brand && p.brand !== filters.brand) return false;
+      if (filters.gender && p.gender !== filters.gender) return false;
+      if (filters.scentType && p.scentType !== filters.scentType) return false;
+      if (filters.format && p.format !== filters.format) return false;
+      if (filters.season && !p.season.includes(filters.season as never)) return false;
+      if (filters.intensity && p.intensity !== filters.intensity) return false;
+      const minP = Math.min(...Object.values(p.prices));
+      if (minVal > 0 && minP < minVal) return false;
+      if (maxVal < Infinity && minP > maxVal) return false;
+      if (search) {
+        const q = search.toLowerCase();
+        if (!p.name.toLowerCase().includes(q) && !p.brand.toLowerCase().includes(q)) return false;
+      }
+      return true;
+    });
+    if (sort === 'popular') result = [...result].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
+    if (sort === 'price_asc') result = [...result].sort((a, b) => Math.min(...Object.values(a.prices)) - Math.min(...Object.values(b.prices)));
+    if (sort === 'price_desc') result = [...result].sort((a, b) => Math.min(...Object.values(b.prices)) - Math.min(...Object.values(a.prices)));
+    if (sort === 'new') result = [...result].sort((a, b) => (b.newArrival ? 1 : 0) - (a.newArrival ? 1 : 0));
+    return result;
+  }, [perfumes, filters, search, sort, priceMin, priceMax]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters, search, sort, priceMin, priceMax]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPageSafe = Math.min(currentPage, totalPages);
+  const paginated = filtered.slice((currentPageSafe - 1) * PAGE_SIZE, currentPageSafe * PAGE_SIZE);
+
+  const filterContentProps: FilterContentProps = {
+    activeFilterCount,
+    priceMin,
+    priceMax,
+    setPriceMin,
+    setPriceMax,
+    filters,
+    setFilter,
+    clearAll,
+  };
 
   return (
     <div>
@@ -270,7 +336,7 @@ export default function CatalogClient({ perfumes }: Props) {
               className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-cream-200 hover:bg-cream-300 flex items-center justify-center transition-colors"
             >
               <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                <path d="M1 1l8 8M9 1L1 9" stroke="#555" strokeWidth="1.4" strokeLinecap="round" />
+                <path d="M1 1l8 8M9 1L1 9" stroke="#5e5d59" strokeWidth="1.4" strokeLinecap="round" />
               </svg>
             </button>
           )}
@@ -290,7 +356,7 @@ export default function CatalogClient({ perfumes }: Props) {
       <div className="md:hidden mb-5 flex items-center justify-between">
         <button
           onClick={() => setFiltersOpen(!filtersOpen)}
-          className="flex items-center gap-2 text-sm text-ink-700 bg-white border border-cream-200 px-4 py-2.5 rounded-lg hover:border-ink-500 transition-all duration-200"
+          className="flex items-center gap-2 text-sm text-ink-700 bg-cream-50 border border-cream-200 px-4 py-2.5 rounded-lg hover:border-ink-500 transition-all duration-200"
         >
           <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
             <path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -308,14 +374,14 @@ export default function CatalogClient({ perfumes }: Props) {
       <div className="flex gap-10">
         {/* Desktop sidebar */}
         <aside className="hidden md:block w-52 shrink-0">
-          <div className="sticky top-28 bg-white rounded-2xl border border-cream-200 p-5 shadow-sm">
+          <div className="sticky top-28 bg-cream-50 rounded-2xl p-5 max-h-[calc(100dvh-8rem)] overflow-y-auto" style={{ boxShadow: '0px 0px 0px 1px #e8e6dc, 0px 4px 24px rgba(0,0,0,0.03)' }}>
             <div className="flex items-center justify-between mb-4">
               <p className="text-xs font-semibold tracking-widest uppercase text-ink-900">Фильтры</p>
               {activeFilterCount > 0 && (
                 <span className="text-xs text-ink-300">{activeFilterCount} активно</span>
               )}
             </div>
-            {FilterContent()}
+            <FilterContent {...filterContentProps} />
           </div>
         </aside>
 
@@ -331,27 +397,27 @@ export default function CatalogClient({ perfumes }: Props) {
                 onClick={() => setFiltersOpen(false)}
               />
               <motion.aside
-                className="fixed inset-y-0 left-0 z-50 w-[85vw] max-w-[340px] bg-white shadow-2xl overflow-y-auto md:hidden flex flex-col"
+                className="fixed inset-y-0 left-0 z-50 w-[85vw] max-w-[340px] bg-cream-50 shadow-2xl overflow-y-auto md:hidden flex flex-col"
                 initial={{ x: '-100%' }}
                 animate={{ x: 0 }}
                 exit={{ x: '-100%' }}
                 transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
               >
-                <div className="flex items-center justify-between p-5 border-b border-cream-200 sticky top-0 bg-white z-10">
+                <div className="flex items-center justify-between p-5 border-b border-cream-200 sticky top-0 bg-cream-50 z-10">
                   <p className="font-semibold text-ink-900">Фильтры</p>
                   <button
                     onClick={() => setFiltersOpen(false)}
                     className="w-8 h-8 rounded-full bg-cream-100 flex items-center justify-center hover:bg-cream-200 transition-colors"
                   >
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <path d="M1 1l12 12M13 1L1 13" stroke="#0A0A0A" strokeWidth="1.5" strokeLinecap="round" />
+                      <path d="M1 1l12 12M13 1L1 13" stroke="#141413" strokeWidth="1.5" strokeLinecap="round" />
                     </svg>
                   </button>
                 </div>
                 <div className="p-5 flex-1">
-                  {FilterContent()}
+                  <FilterContent {...filterContentProps} />
                 </div>
-                <div className="p-5 border-t border-cream-200 sticky bottom-0 bg-white" style={{ paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom, 0px))' }}>
+                <div className="p-5 border-t border-cream-200 sticky bottom-0 bg-cream-50" style={{ paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom, 0px))' }}>
                   <button onClick={() => setFiltersOpen(false)} className="btn-primary w-full">
                     Показать {filtered.length} позиций
                   </button>
@@ -385,11 +451,52 @@ export default function CatalogClient({ perfumes }: Props) {
           </div>
 
           {filtered.length > 0 ? (
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              {filtered.map((p, i) => (
-                <ProductCard key={p.id} perfume={p} index={i} />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                {paginated.map((p, i) => (
+                  <ProductCard key={p.id} perfume={p} index={i} />
+                ))}
+              </div>
+
+              {totalPages > 1 && (
+                <div className="flex flex-wrap items-center justify-center gap-2 mt-10 md:mt-12">
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPageSafe === 1}
+                    className="btn-outline px-5 py-3 disabled:opacity-40 disabled:translate-y-0"
+                  >
+                    Назад
+                  </button>
+                  {Array.from({ length: totalPages }, (_, index) => {
+                    const page = index + 1;
+                    const active = page === currentPageSafe;
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`min-w-11 h-11 rounded-full text-sm transition-colors ${
+                          active
+                            ? 'bg-ink-900 text-white'
+                            : 'bg-cream-50 text-ink-500 hover:text-ink-900'
+                        }`}
+                        style={{ boxShadow: active ? '0px 0px 0px 1px #141413' : '0px 0px 0px 1px #e8e6dc' }}
+                        aria-label={`Страница ${page}`}
+                        aria-current={active ? 'page' : undefined}
+                      >
+                        {page}
+                      </button>
+                    );
+                  })}
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    disabled={currentPageSafe === totalPages}
+                    className="btn-outline px-5 py-3 disabled:opacity-40 disabled:translate-y-0"
+                  >
+                    Далее
+                  </button>
+                </div>
+              )}
+            </>
           ) : (
             <motion.div
               className="flex flex-col items-center justify-center py-24 text-center"
@@ -398,9 +505,9 @@ export default function CatalogClient({ perfumes }: Props) {
             >
               <div className="w-16 h-16 rounded-full bg-cream-200 flex items-center justify-center mx-auto mb-6">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                  <circle cx="11" cy="11" r="8" stroke="#999" strokeWidth="1.5"/>
-                  <path d="M21 21l-4.35-4.35" stroke="#999" strokeWidth="1.5" strokeLinecap="round"/>
-                  <path d="M8 11h6M11 8v6" stroke="#999" strokeWidth="1.5" strokeLinecap="round"/>
+                  <circle cx="11" cy="11" r="8" stroke="#87867f" strokeWidth="1.5"/>
+                  <path d="M21 21l-4.35-4.35" stroke="#87867f" strokeWidth="1.5" strokeLinecap="round"/>
+                  <path d="M8 11h6M11 8v6" stroke="#87867f" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
               </div>
               <p className="font-display text-3xl font-light text-ink-900 mb-2">Ничего не найдено</p>

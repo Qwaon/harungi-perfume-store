@@ -1,0 +1,150 @@
+[
+  {
+    "id": "tom-ford-black-orchid",
+    "name": "Black Orchid",
+    "brand": "Tom Ford",
+    "description": "Трюфель, орхидея и тёмный пачули — соблазн без объяснений. Black Orchid не просит внимания: он его берёт.",
+    "notes": {
+      "top": [],
+      "middle": [],
+      "base": []
+    },
+    "gender": "женский",
+    "scentType": "восточный",
+    "format": "распив",
+    "images": [
+      "https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=800&q=80"
+    ],
+    "prices": {
+      "2ml": 400,
+      "5ml": 850,
+      "10ml": 1500
+    },
+    "availableVolumes": [
+      "2ml",
+      "5ml",
+      "10ml"
+    ],
+    "featured": true,
+    "newArrival": true,
+    "bestseller": false
+  },
+  {
+    "id": "ПРИМЕР-id",
+    "name": "Название аромата",
+    "brand": "Бренд",
+    "description": "Описание в одну-две строки без переносов.",
+    "notes": {
+      "top": [],
+      "middle": [],
+      "base": []
+    },
+    "gender": "унисекс",
+    "scentType": "древесный",
+    "format": "распив",
+    "images": [
+      "https://ссылка-на-фото.jpg"
+    ],
+    "prices": {},
+    "availableVolumes": [],
+    "featured": false,
+    "newArrival": true,
+    "bestseller": false
+  },
+  {
+    "id": "dior-sauvage",
+    "name": "Sauvage",
+    "brand": "Christian Dior",
+    "description": "Бергамот и перец на открытом воздухе — резкий, свободный, без компромиссов. Один из самых узнаваемых силуэтов в современной парфюмерии.",
+    "notes": {
+      "top": [],
+      "middle": [],
+      "base": []
+    },
+    "gender": "мужской",
+    "scentType": "свежий",
+    "format": "оригинал",
+    "images": [
+      "https://images.unsplash.com/photo-1547887537-6158d64c35b3?w=800&q=80",
+      "https://images.unsplash.com/photo-1592914610354-fd354ea45e48?w=800&q=80"
+    ],
+    "prices": {
+      "2ml": 300,
+      "5ml": 650,
+      "10ml": 1200,
+      "50ml": 9500,
+      "100ml": 14500
+    },
+    "availableVolumes": [
+      "2ml",
+      "5ml",
+      "10ml",
+      "50ml",
+      "100ml"
+    ],
+    "featured": true,
+    "newArrival": true,
+    "bestseller": true
+  },
+  {
+    "id": "baccarat-rouge-540",
+    "name": "Baccarat Rouge 540",
+    "brand": "Maison Francis Kurkdjian",
+    "description": "Шафран и жасмин сгорают в янтарном свете — остаётся золотистый шлейф, который невозможно забыть. Культовый аромат современности: тёплый, лучезарный, стойкий.",
+    "notes": {
+      "top": [],
+      "middle": [],
+      "base": []
+    },
+    "gender": "унисекс",
+    "scentType": "восточный",
+    "format": "распив",
+    "images": [
+      "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=800&q=80",
+      "https://images.unsplash.com/photo-1563170351-be82bc888aa4?w=800&q=80"
+    ],
+    "prices": {
+      "2ml": 450,
+      "5ml": 950,
+      "10ml": 1700
+    },
+    "availableVolumes": [
+      "2ml",
+      "5ml",
+      "10ml"
+    ],
+    "featured": true,
+    "newArrival": true,
+    "bestseller": true
+  },
+  {
+    "id": "creed-aventus",
+    "name": "Aventus",
+    "brand": "Creed",
+    "description": "Ананасовый дым и берёзовый пепел — аромат с биографией. Aventus носят не чтобы понравиться, а чтобы запомниться.",
+    "notes": {
+      "top": [],
+      "middle": [],
+      "base": []
+    },
+    "gender": "мужской",
+    "scentType": "свежий",
+    "format": "распив",
+    "images": [
+      "https://images.unsplash.com/photo-1541643600914-78b084683702?w=800&q=80"
+    ],
+    "prices": {
+      "2ml": 500,
+      "5ml": 1100,
+      "10ml": 2000
+    },
+    "availableVolumes": [
+      "2ml",
+      "5ml",
+      "10ml"
+    ],
+    "featured": true,
+    "newArrival": true,
+    "bestseller": true
+  }
+]

@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -39,16 +40,23 @@ export default function ImageGallery({ images, name }: Props) {
         onTouchEnd={handleTouchEnd}
       >
         <AnimatePresence mode="wait">
-          <motion.img
+          <motion.div
             key={active}
-            src={images[active]}
-            alt={name}
-            className="w-full h-full object-cover"
+            className="absolute inset-0"
             initial={{ opacity: 0, scale: 1.04 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          />
+          >
+            <Image
+              src={images[active]}
+              alt={name}
+              fill
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              className="object-cover"
+              priority={active === 0}
+            />
+          </motion.div>
         </AnimatePresence>
 
         {/* Arrow nav (for mobile swipe feel) */}
@@ -60,7 +68,7 @@ export default function ImageGallery({ images, name }: Props) {
               aria-label="Предыдущее фото"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M10 3L5 8l5 5" stroke="#141210" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M10 3L5 8l5 5" stroke="#141413" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
             <button
@@ -69,7 +77,7 @@ export default function ImageGallery({ images, name }: Props) {
               aria-label="Следующее фото"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M6 3l5 5-5 5" stroke="#141210" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M6 3l5 5-5 5" stroke="#141413" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
           </>
@@ -89,8 +97,13 @@ export default function ImageGallery({ images, name }: Props) {
                   : 'opacity-50 hover:opacity-80'
               }`}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt={`${name} ${i + 1}`} className="w-full h-full object-cover" />
+              <Image
+                src={src}
+                alt={`${name} ${i + 1}`}
+                fill
+                sizes="120px"
+                className="object-cover"
+              />
             </button>
           ))}
         </div>

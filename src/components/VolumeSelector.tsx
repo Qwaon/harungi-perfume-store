@@ -1,6 +1,8 @@
 'use client';
 
 import { Volume } from '@/types';
+import { trackEvent } from '@/lib/analytics';
+import { VOLUME_LABELS, VOLUME_HINTS } from '@/lib/constants';
 
 interface Props {
   availableVolumes: Volume[];
@@ -9,13 +11,8 @@ interface Props {
   onChange: (v: Volume) => void;
 }
 
-const volumeLabels: Record<Volume, string> = {
-  '2ml': '2 мл',
-  '5ml': '5 мл',
-  '10ml': '10 мл',
-  '50ml': '50 мл',
-  '100ml': '100 мл',
-};
+const volumeLabels = VOLUME_LABELS;
+const volumeHints = VOLUME_HINTS;
 
 const isDecant = (v: Volume) => ['2ml', '5ml', '10ml'].includes(v);
 
@@ -33,14 +30,24 @@ function VolumeButton({
   return (
     <button
       onClick={onClick}
-      className={`px-5 py-3 rounded-xl border text-sm text-left transition-all duration-200 focus:outline-none ${
+      className={`px-5 py-3.5 rounded-xl text-left transition-all duration-200 focus:outline-none ${
         selected
-          ? 'border-ink-900 bg-ink-900 text-white shadow-md scale-[1.03]'
-          : 'border-cream-200 bg-white text-ink-700 hover:border-ink-700 hover:shadow-sm hover:-translate-y-px'
+          ? 'bg-ink-900 text-white'
+          : 'bg-cream-50 text-ink-700 hover:-translate-y-px'
       }`}
+      style={{
+        boxShadow: selected
+          ? '0px 0px 0px 1px #141413, 0px 4px 12px rgba(0,0,0,0.1)'
+          : '0px 0px 0px 1px #e8e6dc',
+      }}
     >
-      <span className="block font-semibold">{volumeLabels[volume]}</span>
-      <span className={`block text-xs mt-0.5 ${selected ? 'text-white/60' : 'text-ink-300'}`}>
+      <span className="flex items-baseline gap-2">
+        <span className="text-sm">{volumeLabels[volume]}</span>
+        <span className={`text-xs ${selected ? 'text-white/50' : 'text-ink-300'}`}>
+          {volumeHints[volume]}
+        </span>
+      </span>
+      <span className={`block text-xs mt-1 ${selected ? 'text-white/60' : 'text-ink-300'}`}>
         {price?.toLocaleString('ru-RU')} ₽
       </span>
     </button>
@@ -48,6 +55,10 @@ function VolumeButton({
 }
 
 export default function VolumeSelector({ availableVolumes, prices, selected, onChange }: Props) {
+  const handleChange = (v: Volume) => {
+    trackEvent('volume_select', { volume: v, price: prices[v] });
+    onChange(v);
+  };
   const decants = availableVolumes.filter(isDecant);
   const bottles = availableVolumes.filter((v) => !isDecant(v));
 
@@ -63,7 +74,7 @@ export default function VolumeSelector({ availableVolumes, prices, selected, onC
                 volume={v}
                 price={prices[v]}
                 selected={selected === v}
-                onClick={() => onChange(v)}
+                onClick={() => handleChange(v)}
               />
             ))}
           </div>
@@ -79,7 +90,7 @@ export default function VolumeSelector({ availableVolumes, prices, selected, onC
                 volume={v}
                 price={prices[v]}
                 selected={selected === v}
-                onClick={() => onChange(v)}
+                onClick={() => handleChange(v)}
               />
             ))}
           </div>

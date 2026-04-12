@@ -7,20 +7,28 @@ export async function generateStaticParams() {
 }
 
 interface Props {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
-export function generateMetadata({ params }: Props) {
-  const perfume = perfumes.find((p) => p.id === params.id);
+export async function generateMetadata({ params }: Props) {
+  const { id } = await params;
+  const perfume = perfumes.find((p) => p.id === id);
   if (!perfume) return {};
+  const minPrice = Math.min(...Object.values(perfume.prices));
   return {
-    title: `${perfume.name} — ${perfume.brand} | HARUNGI`,
-    description: perfume.description,
+    title: `${perfume.name} — ${perfume.brand}`,
+    description: `${perfume.description} От ${minPrice.toLocaleString('ru-RU')} ₽.`,
+    openGraph: {
+      title: `${perfume.name} — ${perfume.brand} | HARUNGI`,
+      description: `${perfume.brand} ${perfume.name}. ${perfume.format === 'распив' ? 'Распивы' : 'Оригинал'} от ${minPrice.toLocaleString('ru-RU')} ₽.`,
+      images: perfume.images[0] ? [{ url: perfume.images[0], width: 800, height: 800, alt: perfume.name }] : [],
+    },
   };
 }
 
-export default function ProductPage({ params }: Props) {
-  const perfume = perfumes.find((p) => p.id === params.id);
+export default async function ProductPage({ params }: Props) {
+  const { id } = await params;
+  const perfume = perfumes.find((p) => p.id === id);
   if (!perfume) notFound();
 
   const related = perfumes

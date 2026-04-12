@@ -17,13 +17,14 @@ export default function Header() {
   const navLinks = [
     { href: '/catalog', label: 'Каталог' },
     { href: '/about', label: 'О нас' },
+    { href: '/faq', label: 'FAQ' },
   ];
 
   return (
     <>
       <motion.header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          scrolled ? 'bg-white/95 backdrop-blur-md shadow-sm' : 'bg-transparent'
+          scrolled ? 'bg-cream-100/95 backdrop-blur-md' : 'bg-transparent'
         }`}
         initial={{ y: -80 }}
         animate={{ y: 0 }}
@@ -31,7 +32,7 @@ export default function Header() {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
-          <Link href="/" className="font-display text-2xl md:text-3xl font-light tracking-[0.2em] text-ink-900 hover:opacity-70 transition-opacity duration-200">
+          <Link href="/" className="font-display text-xl md:text-2xl font-light tracking-[0.3em] text-ink-900 hover:opacity-70 transition-opacity duration-200">
             HARUNGI
           </Link>
 
@@ -55,7 +56,7 @@ export default function Header() {
           {/* Mobile burger */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="md:hidden flex flex-col gap-1.5 p-2 rounded-lg hover:bg-cream-100 transition-colors"
+            className="md:hidden flex flex-col gap-1.5 p-2 rounded-lg hover:bg-cream-200/50 transition-colors"
             aria-label="Меню"
           >
             <motion.span
@@ -81,7 +82,7 @@ export default function Header() {
       <AnimatePresence>
         {menuOpen && (
           <motion.div
-            className="fixed inset-0 z-40 bg-white flex flex-col items-center justify-center gap-10"
+            className="fixed inset-0 z-40 bg-cream-100 flex flex-col items-center justify-center gap-10"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}

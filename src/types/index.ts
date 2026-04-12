@@ -10,6 +10,10 @@ export type ScentType =
   | 'гурманский';
 
 export type Format = 'оригинал' | 'распив';
+export type Occasion = 'офис' | 'вечер' | 'ежедневно' | 'свидание' | 'путешествие';
+export type Season = 'весна' | 'лето' | 'осень' | 'зима' | 'всесезонный';
+export type Intensity = 'лёгкий' | 'средний' | 'насыщенный';
+export type SourceType = 'retail' | 'decant';
 
 export interface Perfume {
   id: string;
@@ -29,6 +33,12 @@ export interface Perfume {
   availableVolumes: Volume[];
   featured: boolean;
   newArrival?: boolean;
+  bestseller?: boolean;
+  occasion: Occasion[];
+  season: Season[];
+  intensity: Intensity;
+  inStock: boolean;
+  sourceType: SourceType;
 }
 
 export interface OrderPayload {
@@ -39,6 +49,11 @@ export interface OrderPayload {
   brand: string;
   volume: Volume;
   price: number;
+  source: string;
+  pageUrl: string;
+  pagePath: string;
+  timestamp: string;
+  messageType: 'order' | 'consultation';
 }
 
 export interface FilterState {
@@ -46,4 +61,6 @@ export interface FilterState {
   gender: string;
   scentType: string;
   format: string;
+  season: string;
+  intensity: string;
 }

@@ -3,8 +3,12 @@ import CatalogClient from '@/components/CatalogClient';
 import { perfumes } from '@/data/perfumes';
 
 export const metadata = {
-  title: 'Каталог — HARUNGI',
-  description: 'Вся коллекция нишевой и селективной парфюмерии. Оригиналы и распивы.',
+  title: 'Каталог',
+  description: 'Вся коллекция нишевой и селективной парфюмерии HARUNGI. Оригиналы и распивы от 2 мл. Фильтры по бренду, полу и типу аромата.',
+  openGraph: {
+    title: 'Каталог — HARUNGI',
+    description: 'Нишевая парфюмерия: оригиналы и распивы от 2 мл. Tom Ford, Creed, Dior, Chanel и другие.',
+  },
 };
 
 export default function CatalogPage() {
