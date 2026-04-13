@@ -30,28 +30,6 @@
     "bestseller": false
   },
   {
-    "id": "ПРИМЕР-id",
-    "name": "Название аромата",
-    "brand": "Бренд",
-    "description": "Описание в одну-две строки без переносов.",
-    "notes": {
-      "top": [],
-      "middle": [],
-      "base": []
-    },
-    "gender": "унисекс",
-    "scentType": "древесный",
-    "format": "распив",
-    "images": [
-      "https://ссылка-на-фото.jpg"
-    ],
-    "prices": {},
-    "availableVolumes": [],
-    "featured": false,
-    "newArrival": true,
-    "bestseller": false
-  },
-  {
     "id": "dior-sauvage",
     "name": "Sauvage",
     "brand": "Christian Dior",
@@ -107,36 +85,6 @@
       "2ml": 450,
       "5ml": 950,
       "10ml": 1700
-    },
-    "availableVolumes": [
-      "2ml",
-      "5ml",
-      "10ml"
-    ],
-    "featured": true,
-    "newArrival": true,
-    "bestseller": true
-  },
-  {
-    "id": "creed-aventus",
-    "name": "Aventus",
-    "brand": "Creed",
-    "description": "Ананасовый дым и берёзовый пепел — аромат с биографией. Aventus носят не чтобы понравиться, а чтобы запомниться.",
-    "notes": {
-      "top": [],
-      "middle": [],
-      "base": []
-    },
-    "gender": "мужской",
-    "scentType": "свежий",
-    "format": "распив",
-    "images": [
-      "https://images.unsplash.com/photo-1541643600914-78b084683702?w=800&q=80"
-    ],
-    "prices": {
-      "2ml": 500,
-      "5ml": 1100,
-      "10ml": 2000
     },
     "availableVolumes": [
       "2ml",
