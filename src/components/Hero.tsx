@@ -15,17 +15,10 @@ const fadeUp = {
 
 export default function Hero() {
   return (
-    <section className="relative min-h-dvh flex items-center overflow-hidden bg-ink-900">
-      {/* Background atmospheric image */}
-      <div className="absolute inset-0">
-        <img
-          src="https://images.unsplash.com/photo-1541643600914-78b084683601?w=1920&q=80"
-          alt=""
-          className="w-full h-full object-cover opacity-40"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-ink-900 via-ink-900/60 to-ink-900/20" />
-        <div className="absolute inset-0 bg-gradient-to-r from-ink-900/70 via-ink-900/20 to-transparent" />
-      </div>
+    <section
+      className="relative min-h-dvh flex items-center overflow-hidden"
+      style={{ background: 'linear-gradient(135deg, #0A0A0A 0%, #1c1a17 60%, #0A0A0A 100%)' }}
+    >
 
       {/* Content */}
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 pt-32 pb-24 w-full">
