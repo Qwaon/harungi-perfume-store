@@ -85,17 +85,20 @@ function transformRecord(record) {
 
   const parseVolumes = (f) => {
     const vols = [];
-    for (const v of ['2ml', '5ml', '10ml', '50ml', '100ml']) {
-      const key = `price_${v}`;
-      if (f[key] != null && f[key] !== '') vols.push(v);
+    for (const v of ['5ml', '10ml', '15ml', '20ml']) {
+      if (f[`price_${v}`] != null && f[`price_${v}`] !== '') vols.push(v);
     }
+    if (f['price_original'] != null && f['price_original'] !== '') vols.push('original');
     return vols;
   };
 
   const prices = {};
-  for (const v of ['2ml', '5ml', '10ml', '50ml', '100ml']) {
+  for (const v of ['5ml', '10ml', '15ml', '20ml']) {
     const val = f[`price_${v}`];
     if (val != null && val !== '') prices[v] = Number(val);
+  }
+  if (f['price_original'] != null && f['price_original'] !== '') {
+    prices['original'] = Number(f['price_original']);
   }
 
   return {
@@ -116,6 +119,7 @@ function transformRecord(record) {
       : [],
     prices,
     availableVolumes: parseVolumes(f),
+    originalVolumeMl: f['original_volume_ml'] ? Number(f['original_volume_ml']) : undefined,
     featured: Boolean(f.featured),
     newArrival: Boolean(f.newArrival),
     bestseller: Boolean(f.bestseller),
