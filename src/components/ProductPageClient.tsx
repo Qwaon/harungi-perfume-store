@@ -49,7 +49,7 @@ export default function ProductPageClient({ perfume, related }: Props) {
 
   return (
     <>
-      <div className="min-h-screen pt-24 md:pt-32 pb-24 md:pb-0">
+      <div className="min-h-screen pt-24 md:pt-32 pb-36 md:pb-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-2 text-xs text-ink-300 mb-6 md:mb-10">
