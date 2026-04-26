@@ -2,7 +2,7 @@ import type { Perfume } from '@/types';
 import { enrichPerfume, slugifyBrand, buildBrandEntries, getPerfumesByBrandSlug as getPerfumesByBrandSlugUtil } from './utils';
 import rawData from './perfumes.json';
 
-type RawPerfume = Omit<Perfume, 'occasion' | 'season' | 'intensity' | 'sourceType'>;
+type RawPerfume = Omit<Perfume, 'occasion' | 'season' | 'intensity' | 'sourceType' | 'inStock'> & { inStock?: boolean };
 
 export const perfumes: Perfume[] = (rawData as RawPerfume[]).map(enrichPerfume);
 

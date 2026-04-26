@@ -1,6 +1,6 @@
 import type { Perfume, Occasion, Season, Intensity, SourceType } from '@/types';
 
-type BasePerfume = Omit<Perfume, 'occasion' | 'season' | 'intensity' | 'sourceType'>;
+type BasePerfume = Omit<Perfume, 'occasion' | 'season' | 'intensity' | 'sourceType' | 'inStock'> & { inStock?: boolean };
 
 function deriveOccasion(perfume: BasePerfume): Occasion[] {
   const { scentType, gender } = perfume;
