@@ -120,6 +120,7 @@ function transformRecord(record) {
     prices,
     availableVolumes: parseVolumes(f),
     originalVolumeMl: f['original_volume_ml'] ? Number(f['original_volume_ml']) : undefined,
+    inStock: f.inStock !== false && f.inStock !== 0,
     featured: Boolean(f.featured),
     newArrival: Boolean(f.newArrival),
     bestseller: Boolean(f.bestseller),

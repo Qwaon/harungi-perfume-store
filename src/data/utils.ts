@@ -1,6 +1,6 @@
 import type { Perfume, Occasion, Season, Intensity, SourceType } from '@/types';
 
-type BasePerfume = Omit<Perfume, 'occasion' | 'season' | 'intensity' | 'inStock' | 'sourceType'>;
+type BasePerfume = Omit<Perfume, 'occasion' | 'season' | 'intensity' | 'sourceType'>;
 
 function deriveOccasion(perfume: BasePerfume): Occasion[] {
   const { scentType, gender } = perfume;
@@ -35,7 +35,7 @@ export function enrichPerfume(perfume: BasePerfume): Perfume {
     occasion: deriveOccasion(perfume),
     season: deriveSeason(perfume),
     intensity: deriveIntensity(perfume),
-    inStock: true,
+    inStock: perfume.inStock ?? true,
     sourceType: perfume.format === 'распив' ? 'decant' : 'retail',
   };
 }
