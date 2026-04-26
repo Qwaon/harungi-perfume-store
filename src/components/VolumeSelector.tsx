@@ -9,23 +9,26 @@ interface Props {
   prices: Partial<Record<Volume, number>>;
   selected: Volume;
   onChange: (v: Volume) => void;
+  originalVolumeMl?: number;
 }
 
-const volumeLabels = VOLUME_LABELS;
-const volumeHints = VOLUME_HINTS;
-
-const isDecant = (v: Volume) => ['2ml', '5ml', '10ml'].includes(v);
+function getVolumeLabel(volume: Volume, originalVolumeMl?: number): string {
+  if (volume === 'original' && originalVolumeMl) return `${originalVolumeMl} мл`;
+  return VOLUME_LABELS[volume];
+}
 
 function VolumeButton({
   volume,
   price,
   selected,
   onClick,
+  originalVolumeMl,
 }: {
   volume: Volume;
   price: number | undefined;
   selected: boolean;
   onClick: () => void;
+  originalVolumeMl?: number;
 }) {
   return (
     <button
@@ -42,9 +45,9 @@ function VolumeButton({
       }}
     >
       <span className="flex items-baseline gap-2">
-        <span className="text-sm">{volumeLabels[volume]}</span>
+        <span className="text-sm">{getVolumeLabel(volume, originalVolumeMl)}</span>
         <span className={`text-xs ${selected ? 'text-white/50' : 'text-ink-300'}`}>
-          {volumeHints[volume]}
+          {VOLUME_HINTS[volume]}
         </span>
       </span>
       <span className={`block text-xs mt-1 ${selected ? 'text-white/60' : 'text-ink-300'}`}>
@@ -54,13 +57,20 @@ function VolumeButton({
   );
 }
 
-export default function VolumeSelector({ availableVolumes, prices, selected, onChange }: Props) {
+export default function VolumeSelector({
+  availableVolumes,
+  prices,
+  selected,
+  onChange,
+  originalVolumeMl,
+}: Props) {
   const handleChange = (v: Volume) => {
     trackEvent('volume_select', { volume: v, price: prices[v] });
     onChange(v);
   };
-  const decants = availableVolumes.filter(isDecant);
-  const bottles = availableVolumes.filter((v) => !isDecant(v));
+
+  const decants = availableVolumes.filter((v) => v !== 'original');
+  const bottles = availableVolumes.filter((v) => v === 'original');
 
   return (
     <div className="flex flex-col gap-6">
@@ -91,6 +101,7 @@ export default function VolumeSelector({ availableVolumes, prices, selected, onC
                 price={prices[v]}
                 selected={selected === v}
                 onClick={() => handleChange(v)}
+                originalVolumeMl={originalVolumeMl}
               />
             ))}
           </div>
