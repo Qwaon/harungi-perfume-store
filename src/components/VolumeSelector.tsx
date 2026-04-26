@@ -2,7 +2,7 @@
 
 import { Volume } from '@/types';
 import { trackEvent } from '@/lib/analytics';
-import { VOLUME_LABELS, VOLUME_HINTS } from '@/lib/constants';
+import { VOLUME_LABELS } from '@/lib/constants';
 
 interface Props {
   availableVolumes: Volume[];
@@ -44,12 +44,7 @@ function VolumeButton({
           : '0px 0px 0px 1px #e8e6dc',
       }}
     >
-      <span className="flex items-baseline gap-2">
-        <span className="text-sm">{getVolumeLabel(volume, originalVolumeMl)}</span>
-        <span className={`text-xs ${selected ? 'text-white/50' : 'text-ink-300'}`}>
-          {VOLUME_HINTS[volume]}
-        </span>
-      </span>
+      <span className="block text-sm">{getVolumeLabel(volume, originalVolumeMl)}</span>
       <span className={`block text-xs mt-1 ${selected ? 'text-white/60' : 'text-ink-300'}`}>
         {price?.toLocaleString('ru-RU')} ₽
       </span>
