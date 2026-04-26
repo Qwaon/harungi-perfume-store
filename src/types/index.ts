@@ -1,4 +1,4 @@
-export type Volume = '2ml' | '5ml' | '10ml' | '50ml' | '100ml';
+export type Volume = '5ml' | '10ml' | '15ml' | '20ml' | 'original';
 export type Gender = 'мужской' | 'женский' | 'унисекс';
 export type ScentType =
   | 'цветочный'
@@ -31,6 +31,7 @@ export interface Perfume {
   images: string[];
   prices: Partial<Record<Volume, number>>;
   availableVolumes: Volume[];
+  originalVolumeMl?: number;
   featured: boolean;
   newArrival?: boolean;
   bestseller?: boolean;
@@ -41,6 +42,15 @@ export interface Perfume {
   sourceType: SourceType;
 }
 
+export interface CartItem {
+  perfumeId: string;
+  perfumeName: string;
+  brand: string;
+  volume: Volume;
+  volumeLabel: string;
+  price: number;
+}
+
 export interface OrderPayload {
   name: string;
   contact: string;
@@ -48,12 +58,25 @@ export interface OrderPayload {
   perfumeName: string;
   brand: string;
   volume: Volume;
+  volumeLabel: string;
   price: number;
   source: string;
   pageUrl: string;
   pagePath: string;
   timestamp: string;
   messageType: 'order' | 'consultation';
+}
+
+export interface CartOrderPayload {
+  name: string;
+  contact: string;
+  items: CartItem[];
+  total: number;
+  source: string;
+  pageUrl: string;
+  pagePath: string;
+  timestamp: string;
+  messageType: 'cart-order';
 }
 
 export interface FilterState {
