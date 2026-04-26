@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useCart } from '@/contexts/CartContext';
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const { count, openCart } = useCart();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 40);
@@ -51,7 +53,41 @@ export default function Header() {
             <Link href="/catalog" className="btn-primary py-2.5 px-6 text-xs">
               Заказать
             </Link>
+            <button
+              onClick={openCart}
+              className="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-cream-200/50 transition-colors"
+              aria-label="Корзина"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <path d="M16 10a4 4 0 01-8 0" />
+              </svg>
+              {count > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-ink-900 text-cream-50 text-[10px] rounded-full flex items-center justify-center font-medium">
+                  {count > 9 ? '9+' : count}
+                </span>
+              )}
+            </button>
           </nav>
+
+          {/* Mobile cart */}
+          <button
+            onClick={openCart}
+            className="md:hidden relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-cream-200/50 transition-colors mr-1"
+            aria-label="Корзина"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <path d="M16 10a4 4 0 01-8 0" />
+            </svg>
+            {count > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-ink-900 text-cream-50 text-[10px] rounded-full flex items-center justify-center font-medium">
+                {count > 9 ? '9+' : count}
+              </span>
+            )}
+          </button>
 
           {/* Mobile burger */}
           <button
