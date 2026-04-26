@@ -4,7 +4,7 @@ import rawData from './perfumes.json';
 
 type RawPerfume = Omit<Perfume, 'occasion' | 'season' | 'intensity' | 'sourceType' | 'inStock'> & { inStock?: boolean };
 
-export const perfumes: Perfume[] = (rawData as RawPerfume[]).map(enrichPerfume);
+export const perfumes: Perfume[] = (rawData as RawPerfume[]).map(enrichPerfume).filter((p) => p.inStock);
 
 export const brands = [...new Set(perfumes.map((p) => p.brand))].sort();
 export const genders: string[] = ['мужской', 'женский', 'унисекс'];
