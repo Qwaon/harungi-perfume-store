@@ -3,12 +3,13 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { trackEvent } from '@/lib/analytics';
-import { TELEGRAM_URL } from '@/lib/constants';
+import { TELEGRAM_URL, VOLUME_LABELS } from '@/lib/constants';
 import Link from 'next/link';
 import ImageGallery from '@/components/ImageGallery';
 import VolumeSelector from '@/components/VolumeSelector';
 import OrderModal from '@/components/OrderModal';
 import ProductCard from '@/components/ProductCard';
+import { useCart } from '@/contexts/CartContext';
 import { Perfume, Volume } from '@/types';
 
 interface Props {
@@ -19,12 +20,32 @@ interface Props {
 export default function ProductPageClient({ perfume, related }: Props) {
   const [selectedVolume, setSelectedVolume] = useState<Volume>(perfume.availableVolumes[0]);
   const [modalOpen, setModalOpen] = useState(false);
+  const { addItem, openCart } = useCart();
 
   useEffect(() => {
     trackEvent('product_view', { id: perfume.id, brand: perfume.brand });
   }, [perfume.id, perfume.brand]);
 
   const price = perfume.prices[selectedVolume] ?? 0;
+
+  const getVolumeLabel = () => {
+    if (selectedVolume === 'original' && perfume.originalVolumeMl) {
+      return `${perfume.originalVolumeMl} мл`;
+    }
+    return VOLUME_LABELS[selectedVolume];
+  };
+
+  const handleAddToCart = () => {
+    addItem({
+      perfumeId: perfume.id,
+      perfumeName: perfume.name,
+      brand: perfume.brand,
+      volume: selectedVolume,
+      volumeLabel: getVolumeLabel(),
+      price,
+    });
+    openCart();
+  };
 
   return (
     <>
@@ -88,10 +109,63 @@ export default function ProductPageClient({ perfume, related }: Props) {
                 </div>
               </div>
 
+              {/* Volume selector */}
+              <div className="border-t border-cream-200 pt-8">
+                <p className="label text-gold-500 mb-5">Выберите объём</p>
+                <VolumeSelector
+                  availableVolumes={perfume.availableVolumes}
+                  prices={perfume.prices}
+                  selected={selectedVolume}
+                  onChange={setSelectedVolume}
+                  originalVolumeMl={perfume.originalVolumeMl}
+                />
+              </div>
+
+              {/* Price + CTA (desktop) */}
+              <div className="hidden md:flex border-t border-cream-200 pt-8 flex-col gap-6">
+                <div>
+                  <p className="label text-ink-300 mb-1">Цена</p>
+                  <motion.p
+                    key={price}
+                    className="font-display text-4xl font-light text-ink-900"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {price.toLocaleString('ru-RU')} ₽
+                  </motion.p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button onClick={handleAddToCart} className="btn-primary flex-shrink-0">
+                    В корзину
+                  </button>
+                  <button
+                    onClick={() => setModalOpen(true)}
+                    className="btn-outline flex-shrink-0"
+                  >
+                    Заказать сразу
+                  </button>
+                  <a
+                    href={TELEGRAM_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-outline flex-shrink-0 inline-flex items-center gap-2"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.941z"/>
+                    </svg>
+                    Задать вопрос
+                  </a>
+                </div>
+                <p className="text-xs text-ink-300 leading-relaxed">
+                  Заявка — не оплата. Мы свяжемся с вами для подтверждения заказа через Telegram или по телефону.
+                </p>
+              </div>
+
               {/* Description */}
-              <p className="text-ink-500 leading-relaxed text-base">
-                {perfume.description}
-              </p>
+              <div className="border-t border-cream-200 pt-8">
+                <p className="text-ink-500 leading-relaxed text-base">{perfume.description}</p>
+              </div>
 
               {/* Notes pyramid */}
               <div className="border-t border-cream-200 pt-8">
@@ -142,56 +216,6 @@ export default function ProductPageClient({ perfume, related }: Props) {
                   </span>
                 </div>
               </div>
-
-              {/* Volume selector */}
-              <div className="border-t border-cream-200 pt-8">
-                <p className="label text-gold-500 mb-5">Выберите объём</p>
-                <VolumeSelector
-                  availableVolumes={perfume.availableVolumes}
-                  prices={perfume.prices}
-                  selected={selectedVolume}
-                  onChange={setSelectedVolume}
-                />
-              </div>
-
-              {/* Price + CTA (desktop) */}
-              <div className="hidden md:flex border-t border-cream-200 pt-8 flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-                <div>
-                  <p className="label text-ink-300 mb-1">Цена</p>
-                  <motion.p
-                    key={price}
-                    className="font-display text-4xl font-light text-ink-900"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    {price.toLocaleString('ru-RU')} ₽
-                  </motion.p>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <button
-                    onClick={() => setModalOpen(true)}
-                    className="btn-primary flex-shrink-0"
-                  >
-                    Оформить заявку
-                  </button>
-                  <a
-                    href={TELEGRAM_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn-outline flex-shrink-0 inline-flex items-center gap-2"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.941z"/>
-                    </svg>
-                    Задать вопрос
-                  </a>
-                </div>
-              </div>
-
-              <p className="text-xs text-ink-300 leading-relaxed hidden md:block">
-                Заявка — не оплата. Мы свяжемся с вами для подтверждения заказа через Telegram или по телефону.
-              </p>
             </motion.div>
           </div>
 
@@ -215,7 +239,7 @@ export default function ProductPageClient({ perfume, related }: Props) {
         className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-cream-50 border-t border-cream-200 px-4 py-3"
         style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))' }}
       >
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <motion.p
               key={price}
@@ -228,12 +252,17 @@ export default function ProductPageClient({ perfume, related }: Props) {
             </motion.p>
             <p className="text-xs text-ink-300 truncate">{perfume.name}</p>
           </div>
-          <button
-            onClick={() => setModalOpen(true)}
-            className="btn-primary flex-shrink-0 py-3 px-6"
-          >
-            Заказать
-          </button>
+          <div className="flex gap-2 flex-shrink-0">
+            <button onClick={handleAddToCart} className="btn-primary py-3 px-5 text-sm">
+              В корзину
+            </button>
+            <button
+              onClick={() => setModalOpen(true)}
+              className="btn-outline py-3 px-4 text-sm"
+            >
+              Заказать
+            </button>
+          </div>
         </div>
       </div>
 
@@ -244,6 +273,7 @@ export default function ProductPageClient({ perfume, related }: Props) {
         perfumeId={perfume.id}
         brand={perfume.brand}
         volume={selectedVolume}
+        volumeLabel={getVolumeLabel()}
         price={price}
       />
     </>
