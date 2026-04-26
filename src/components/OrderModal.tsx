@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { OrderPayload, Volume } from '@/types';
 import { trackEvent } from '@/lib/analytics';
-import { TELEGRAM_URL, VOLUME_LABELS as VOL_LABELS } from '@/lib/constants';
+import { TELEGRAM_URL } from '@/lib/constants';
 
 interface Props {
   isOpen: boolean;
@@ -13,10 +13,9 @@ interface Props {
   perfumeId: string;
   brand: string;
   volume: Volume;
+  volumeLabel: string;
   price: number;
 }
-
-const volumeLabels = VOL_LABELS;
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
 
@@ -70,7 +69,7 @@ function createFallbackMessage(payload: OrderPayload) {
   return [
     payload.messageType === 'consultation' ? 'Хочу консультацию:' : 'Хочу заказать:',
     `${payload.brand} — ${payload.perfumeName}`,
-    `Объём: ${volumeLabels[payload.volume]}`,
+    `Объём: ${payload.volumeLabel}`,
     `Цена: ${payload.price.toLocaleString('ru-RU')} ₽`,
     '',
     `Имя: ${payload.name}`,
@@ -96,7 +95,7 @@ async function sendOrder(payload: OrderPayload): Promise<boolean> {
   return res.ok;
 }
 
-export default function OrderModal({ isOpen, onClose, perfumeName, perfumeId, brand, volume, price }: Props) {
+export default function OrderModal({ isOpen, onClose, perfumeName, perfumeId, brand, volume, volumeLabel, price }: Props) {
   const [name, setName] = useState('');
   const [contact, setContact] = useState('');
   const [website, setWebsite] = useState('');
@@ -151,6 +150,7 @@ export default function OrderModal({ isOpen, onClose, perfumeName, perfumeId, br
       perfumeName,
       brand,
       volume,
+      volumeLabel,
       price,
       source: detectSource(),
       pageUrl: window.location.href,
@@ -271,7 +271,7 @@ export default function OrderModal({ isOpen, onClose, perfumeName, perfumeId, br
                       >
                         <div>
                           <p className="label text-ink-300 mb-0.5">Объём</p>
-                          <p className="text-ink-900">{volumeLabels[volume]}</p>
+                          <p className="text-ink-900">{volumeLabel}</p>
                         </div>
                         <div className="text-right">
                           <p className="label text-ink-300 mb-0.5">Цена</p>
