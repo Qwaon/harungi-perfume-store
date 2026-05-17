@@ -63,21 +63,19 @@ export default function ProductCard({ perfume, index = 0, onQuickAdd }: Props) {
               {perfume.name}
             </h3>
           </Link>
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-medium text-ink-900">
-              от {minPrice.toLocaleString('ru-RU')} ₽
-            </p>
-            {onQuickAdd ? (
-              <button
-                onClick={() => onQuickAdd(perfume)}
-                className="text-xs text-ink-500 hover:text-ink-900 border border-cream-200 hover:border-ink-500 px-3 py-1.5 rounded-full transition-all duration-150 shrink-0"
-              >
-                + В корзину
-              </button>
-            ) : (
-              <p className="text-xs text-ink-300 capitalize">{perfume.gender}</p>
-            )}
-          </div>
+          <p className="text-sm font-medium text-ink-900 mb-2">
+            от {minPrice.toLocaleString('ru-RU')} ₽
+          </p>
+          {onQuickAdd ? (
+            <button
+              onClick={(e) => { e.preventDefault(); onQuickAdd(perfume); }}
+              className="w-full text-xs font-medium text-ink-900 bg-cream-100 hover:bg-ink-900 hover:text-white border border-cream-200 hover:border-ink-900 py-2 rounded-lg transition-all duration-150"
+            >
+              + В корзину
+            </button>
+          ) : (
+            <p className="text-xs text-ink-300 capitalize">{perfume.gender}</p>
+          )}
         </div>
       </div>
     </motion.div>

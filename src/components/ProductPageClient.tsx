@@ -49,7 +49,7 @@ export default function ProductPageClient({ perfume, related }: Props) {
 
   return (
     <>
-      <div className="min-h-screen pt-24 md:pt-32 pb-36 md:pb-24">
+      <div className="min-h-screen pt-24 md:pt-32 pb-48 md:pb-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-2 text-xs text-ink-300 mb-6 md:mb-10">
@@ -234,10 +234,10 @@ export default function ProductPageClient({ perfume, related }: Props) {
         </div>
       </div>
 
-      {/* Sticky mobile CTA bar */}
+      {/* Sticky mobile CTA bar — sits above BottomNav */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-cream-50 border-t border-cream-200 px-4 py-3"
-        style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))' }}
+        className="fixed left-0 right-0 z-50 md:hidden bg-cream-50 border-t border-cream-200 px-4 py-3"
+        style={{ bottom: 'calc(56px + env(safe-area-inset-bottom, 0px))', paddingBottom: '0.75rem' }}
       >
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">

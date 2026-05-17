@@ -15,7 +15,7 @@ export default function CartDrawer() {
         {isOpen && (
           <>
             <motion.div
-              className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+              className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -23,7 +23,7 @@ export default function CartDrawer() {
             />
 
             <motion.div
-              className="fixed top-0 right-0 bottom-0 z-40 w-full max-w-sm bg-cream-50 flex flex-col"
+              className="fixed top-0 right-0 bottom-0 z-50 w-full max-w-sm bg-cream-50 flex flex-col"
               style={{ boxShadow: '-4px 0 32px rgba(0,0,0,0.12)' }}
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
