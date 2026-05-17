@@ -11,43 +11,30 @@ interface Props {
 
 export default function FeaturedPerfumes({ perfumes }: Props) {
   return (
-    <section className="max-w-7xl mx-auto px-4 sm:px-6 py-24 md:py-36">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
-        <div>
-          <motion.p
-            className="label text-gold-500 mb-3"
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            Избранное
-          </motion.p>
-          <motion.h2
-            className="section-title"
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-          >
-            Популярные ароматы
-          </motion.h2>
-        </div>
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16 md:py-24">
+      <div className="flex items-baseline justify-between mb-10">
+        <motion.h2
+          className="section-title"
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          Популярное
+        </motion.h2>
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.2 }}
+          transition={{ duration: 0.6, delay: 0.15 }}
         >
-          <Link href="/catalog" className="btn-outline py-3 px-7 text-xs">
-            Весь каталог
+          <Link href="/catalog" className="text-sm text-gold-500 hover:text-ink-900 transition-colors duration-200">
+            Весь каталог →
           </Link>
         </motion.div>
       </div>
 
-      {/* Grid — 3 columns on desktop, 2 on tablet, 1 on mobile */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {perfumes.map((p, i) => (
           <ProductCard key={p.id} perfume={p} index={i} />
         ))}

@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { TELEGRAM_URL } from '@/lib/constants';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -19,46 +18,24 @@ export default function Hero() {
       className="relative min-h-dvh flex items-center overflow-hidden"
       style={{ background: 'linear-gradient(135deg, #0A0A0A 0%, #1c1a17 60%, #0A0A0A 100%)' }}
     >
-
-      {/* Content */}
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 pt-32 pb-24 w-full">
-        <motion.p
-          className="label text-cream-300/40 mb-6 tracking-[0.32em]"
+        <motion.h1
+          className="font-display text-[3rem] sm:text-6xl md:text-7xl xl:text-[7rem] font-light leading-[1.02] text-white mb-10 max-w-3xl text-balance"
           variants={fadeUp}
           initial="hidden"
           animate="show"
           custom={0}
         >
-          Нишевая · Оригиналы · Распивы
-        </motion.p>
+          Нишевая<br />
+          <span className="italic text-cream-300">парфюмерия</span>
+        </motion.h1>
 
-        <motion.h1
-          className="font-display text-[3rem] sm:text-6xl md:text-7xl xl:text-[7rem] font-light leading-[1.02] text-white mb-7 max-w-3xl text-balance"
+        <motion.div
+          className="mb-20"
           variants={fadeUp}
           initial="hidden"
           animate="show"
           custom={1}
-        >
-          Не соглашайтесь<br />
-          на <span className="italic text-cream-300">меньшее</span>
-        </motion.h1>
-
-        <motion.p
-          className="text-base md:text-lg text-cream-300/65 leading-relaxed max-w-lg mb-10 text-pretty"
-          variants={fadeUp}
-          initial="hidden"
-          animate="show"
-          custom={2}
-        >
-          Оригинальная нишевая парфюмерия. Распивы от 2 мл — пробуйте прежде, чем вкладывать в полный флакон.
-        </motion.p>
-
-        <motion.div
-          className="flex flex-col sm:flex-row gap-4 mb-20"
-          variants={fadeUp}
-          initial="hidden"
-          animate="show"
-          custom={3}
         >
           <Link
             href="/catalog"
@@ -67,32 +44,20 @@ export default function Hero() {
           >
             Смотреть каталог
           </Link>
-          <a
-            href={TELEGRAM_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2.5 text-white text-sm tracking-widest uppercase font-medium px-8 py-3.5 rounded-full transition-all duration-200 hover:opacity-90 hover:-translate-y-px cursor-pointer"
-            style={{ backgroundColor: '#2AABEE', boxShadow: '0px 0px 0px 1px rgba(42,171,238,0.3)' }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.941z"/>
-            </svg>
-            Написать в Telegram
-          </a>
         </motion.div>
 
-        {/* Stats row */}
         <motion.div
           className="flex gap-8 sm:gap-12 border-t border-white/10 pt-8"
           variants={fadeUp}
           initial="hidden"
           animate="show"
-          custom={4}
+          custom={2}
         >
           {[
-            { value: '50+', label: 'Ароматов' },
+            { value: '200+', label: 'Ароматов' },
             { value: '20+', label: 'Брендов' },
-            { value: 'от 2 мл', label: 'Распивы' },
+            { value: 'от 5 мл', label: 'Распивы' },
+            { value: '100%', label: 'Оригинал' },
           ].map((stat) => (
             <div key={stat.label}>
               <p className="font-display text-3xl sm:text-4xl font-light text-white tabular-nums">{stat.value}</p>
@@ -102,7 +67,6 @@ export default function Hero() {
         </motion.div>
       </div>
 
-      {/* Scroll indicator — animated chevron */}
       <motion.div
         className="absolute bottom-8 left-1/2 -translate-x-1/2"
         initial={{ opacity: 0 }}
