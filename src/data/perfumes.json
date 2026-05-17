@@ -16,15 +16,14 @@
       "https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=800&q=80"
     ],
     "prices": {
-      "2ml": 400,
       "5ml": 850,
       "10ml": 1500
     },
     "availableVolumes": [
-      "2ml",
       "5ml",
       "10ml"
     ],
+    "inStock": false,
     "featured": true,
     "newArrival": true,
     "bestseller": false
@@ -43,23 +42,24 @@
     "scentType": "свежий",
     "format": "оригинал",
     "images": [
-      "https://images.unsplash.com/photo-1547887537-6158d64c35b3?w=800&q=80",
-      "https://images.unsplash.com/photo-1592914610354-fd354ea45e48?w=800&q=80"
+      "https://images.unsplash.com/photo-1547887537-6158d64c35b3?w=800&q=80"
     ],
     "prices": {
-      "2ml": 300,
       "5ml": 650,
       "10ml": 1200,
-      "50ml": 9500,
-      "100ml": 14500
+      "15ml": 2500,
+      "20ml": 5000,
+      "original": 14500
     },
     "availableVolumes": [
-      "2ml",
       "5ml",
       "10ml",
-      "50ml",
-      "100ml"
+      "15ml",
+      "20ml",
+      "original"
     ],
+    "originalVolumeMl": 100,
+    "inStock": true,
     "featured": true,
     "newArrival": true,
     "bestseller": true
@@ -82,15 +82,14 @@
       "https://images.unsplash.com/photo-1563170351-be82bc888aa4?w=800&q=80"
     ],
     "prices": {
-      "2ml": 450,
       "5ml": 950,
       "10ml": 1700
     },
     "availableVolumes": [
-      "2ml",
       "5ml",
       "10ml"
     ],
+    "inStock": false,
     "featured": true,
     "newArrival": true,
     "bestseller": true
