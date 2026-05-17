@@ -4,6 +4,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { CartProvider } from '@/contexts/CartContext';
 import CartDrawer from '@/components/CartDrawer';
+import BottomNav from '@/components/BottomNav';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -47,8 +48,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <CartProvider>
           <Header />
           <CartDrawer />
-          <main className="flex-1">{children}</main>
+          <main className="flex-1 pb-20 md:pb-0">{children}</main>
           <Footer />
+          <BottomNav />
         </CartProvider>
       </body>
     </html>
