@@ -36,7 +36,7 @@ export default function FeaturedPerfumes({ perfumes }: Props) {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {perfumes.map((p, i) => (
-          <ProductCard key={p.id} perfume={p} index={i} />
+          <ProductCard key={p.id} perfume={p} index={i} priority={i === 0} />
         ))}
       </div>
     </section>

@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { lockScroll, unlockScroll } from '@/lib/scrollLock';
 import ProductCard from './ProductCard';
 import QuickAddSheet from './QuickAddSheet';
 import { Perfume, FilterState } from '@/types';
@@ -93,6 +94,18 @@ export default function CatalogClient({ perfumes }: Props) {
   }, [perfumes, filters, search, sort, priceMin, priceMax]);
 
   useEffect(() => { setCurrentPage(1); }, [filters, search, sort, priceMin, priceMax]);
+
+  const closeMore = useCallback(() => setMoreOpen(false), []);
+  useEffect(() => {
+    if (!moreOpen) return;
+    lockScroll();
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeMore(); };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      unlockScroll();
+    };
+  }, [moreOpen, closeMore]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPageSafe = Math.min(currentPage, totalPages);
@@ -187,7 +200,7 @@ export default function CatalogClient({ perfumes }: Props) {
         <>
           <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
             {paginated.map((p, i) => (
-              <ProductCard key={p.id} perfume={p} index={i} onQuickAdd={setQuickAddPerfume} />
+              <ProductCard key={p.id} perfume={p} index={i} priority={i === 0 && currentPage === 1} onQuickAdd={setQuickAddPerfume} />
             ))}
           </div>
 
@@ -251,7 +264,7 @@ export default function CatalogClient({ perfumes }: Props) {
         {moreOpen && (
           <>
             <motion.div
-              className="fixed inset-0 z-40 bg-ink-900/30 backdrop-blur-sm"
+              className="fixed inset-0 z-50 bg-ink-900/30 backdrop-blur-sm"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -310,13 +323,13 @@ export default function CatalogClient({ perfumes }: Props) {
                   <p className="text-xs font-semibold tracking-widest uppercase text-ink-900 mb-3">Цена, ₽</p>
                   <div className="flex items-center gap-2">
                     <input
-                      type="number" min={0} placeholder="от" value={priceMin}
+                      type="number" min={0} inputMode="numeric" placeholder="от" value={priceMin}
                       onChange={(e) => setPriceMin(e.target.value)}
                       className="w-full bg-cream-100 border border-cream-200 rounded-lg px-3 py-2.5 text-sm text-ink-900 placeholder:text-ink-300 focus:outline-none focus:border-ink-700 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                     <span className="text-ink-300 shrink-0">—</span>
                     <input
-                      type="number" min={0} placeholder="до" value={priceMax}
+                      type="number" min={0} inputMode="numeric" placeholder="до" value={priceMax}
                       onChange={(e) => setPriceMax(e.target.value)}
                       className="w-full bg-cream-100 border border-cream-200 rounded-lg px-3 py-2.5 text-sm text-ink-900 placeholder:text-ink-300 focus:outline-none focus:border-ink-700 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />

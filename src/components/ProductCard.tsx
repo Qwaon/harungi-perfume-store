@@ -9,16 +9,17 @@ interface Props {
   perfume: Perfume;
   index?: number;
   onQuickAdd?: (perfume: Perfume) => void;
+  priority?: boolean;
 }
 
-export default function ProductCard({ perfume, index = 0, onQuickAdd }: Props) {
+export default function ProductCard({ perfume, index = 0, onQuickAdd, priority = false }: Props) {
   const minPrice = Math.min(...Object.values(perfume.prices));
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.55, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.55, delay: Math.min(index * 0.06, 0.36), ease: [0.22, 1, 0.36, 1] }}
     >
       <div className="group transition-transform duration-300 ease-out hover:-translate-y-1">
         {/* Image */}
@@ -29,6 +30,7 @@ export default function ProductCard({ perfume, index = 0, onQuickAdd }: Props) {
             fill
             sizes="(max-width: 768px) 50vw, 25vw"
             className="object-cover transition-transform duration-700 group-hover:scale-105"
+            priority={priority}
           />
           <div className="absolute inset-0 bg-ink-900/0 group-hover:bg-ink-900/5 transition-colors duration-500 rounded-xl" />
 
