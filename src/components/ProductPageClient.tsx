@@ -20,7 +20,7 @@ interface Props {
 export default function ProductPageClient({ perfume, related }: Props) {
   const [selectedVolume, setSelectedVolume] = useState<Volume>(perfume.availableVolumes[0]);
   const [modalOpen, setModalOpen] = useState(false);
-  const { addItem, openCart } = useCart();
+  const { addItem, openCart, isOpen: cartOpen } = useCart();
 
   useEffect(() => {
     trackEvent('product_view', { id: perfume.id, brand: perfume.brand });
@@ -49,7 +49,7 @@ export default function ProductPageClient({ perfume, related }: Props) {
 
   return (
     <>
-      <div className="min-h-screen pt-24 md:pt-32 pb-48 md:pb-24">
+      <div className="min-h-screen pt-24 md:pt-32 pb-36 md:pb-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-2 text-xs text-ink-300 mb-6 md:mb-10">
@@ -234,9 +234,9 @@ export default function ProductPageClient({ perfume, related }: Props) {
         </div>
       </div>
 
-      {/* Sticky mobile CTA bar — sits above BottomNav */}
+      {/* Sticky mobile CTA bar — sits above BottomNav, hidden when cart is open */}
       <div
-        className="fixed left-0 right-0 z-50 md:hidden bg-cream-50 border-t border-cream-200 px-4 py-3"
+        className={`fixed left-0 right-0 z-40 md:hidden bg-cream-50 border-t border-cream-200 px-4 py-3 transition-transform duration-300 ${cartOpen ? 'translate-y-full' : 'translate-y-0'}`}
         style={{ bottom: 'calc(56px + env(safe-area-inset-bottom, 0px))', paddingBottom: '0.75rem' }}
       >
         <div className="flex items-center justify-between gap-3">

@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/contexts/CartContext';
 import CartCheckoutModal from '@/components/CartCheckoutModal';
+import { perfumes } from '@/data/perfumes';
 
 export default function CartDrawer() {
   const { items, removeItem, clearCart, total, count, isOpen, closeCart } = useCart();
@@ -64,34 +66,50 @@ export default function CartDrawer() {
                   </div>
                 ) : (
                   <div className="flex flex-col gap-3">
-                    {items.map((item) => (
-                      <div
-                        key={`${item.perfumeId}-${item.volume}`}
-                        className="bg-cream-100 rounded-2xl px-4 py-4 flex items-start gap-3"
-                        style={{ boxShadow: '0px 0px 0px 1px #e8e6dc' }}
-                      >
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-ink-900 truncate">
-                            {item.perfumeName}
-                          </p>
-                          <p className="text-xs text-ink-300 mt-0.5">
-                            {item.brand} · {item.volumeLabel}
-                          </p>
-                          <p className="font-display text-xl font-light text-ink-900 mt-2">
-                            {item.price.toLocaleString('ru-RU')} ₽
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => removeItem(item.perfumeId, item.volume)}
-                          className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-cream-200 transition-colors flex-shrink-0 mt-0.5"
-                          aria-label="Удалить"
+                    {items.map((item) => {
+                      const perfume = perfumes.find((p) => p.id === item.perfumeId);
+                      const image = perfume?.images[0];
+                      return (
+                        <div
+                          key={`${item.perfumeId}-${item.volume}`}
+                          className="bg-cream-50 rounded-2xl p-3 flex items-center gap-3"
+                          style={{ boxShadow: '0px 0px 0px 1px #e8e6dc' }}
                         >
-                          <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-                            <path d="M1 1l12 12M13 1L1 13" stroke="#999" strokeWidth="1.6" strokeLinecap="round" />
-                          </svg>
-                        </button>
-                      </div>
-                    ))}
+                          {/* Thumbnail */}
+                          {image ? (
+                            <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-cream-200 flex-shrink-0">
+                              <Image src={image} alt={item.perfumeName} fill sizes="56px" className="object-cover" />
+                            </div>
+                          ) : (
+                            <div className="w-14 h-14 rounded-xl bg-cream-200 flex-shrink-0" />
+                          )}
+
+                          {/* Info */}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-display text-base font-light text-ink-900 leading-tight truncate">
+                              {item.perfumeName}
+                            </p>
+                            <div className="flex items-baseline gap-2 mt-1">
+                              <p className="font-display text-sm font-light text-ink-900">
+                                {item.price.toLocaleString('ru-RU')} ₽
+                              </p>
+                              <p className="text-xs text-ink-300">{item.volumeLabel}</p>
+                            </div>
+                          </div>
+
+                          {/* Remove */}
+                          <button
+                            onClick={() => removeItem(item.perfumeId, item.volume)}
+                            className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-cream-200 transition-colors flex-shrink-0"
+                            aria-label="Удалить"
+                          >
+                            <svg width="10" height="10" viewBox="0 0 14 14" fill="none">
+                              <path d="M1 1l12 12M13 1L1 13" stroke="#87867f" strokeWidth="1.6" strokeLinecap="round" />
+                            </svg>
+                          </button>
+                        </div>
+                      );
+                    })}
                     <button
                       onClick={clearCart}
                       className="text-xs text-ink-300 hover:text-ink-500 transition-colors mt-1 text-left"
