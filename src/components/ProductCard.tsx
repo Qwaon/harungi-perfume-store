@@ -20,7 +20,7 @@ export default function ProductCard({ perfume, index = 0, onQuickAdd }: Props) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.55, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
     >
-      <div className="group">
+      <div className="group transition-transform duration-300 ease-out hover:-translate-y-1">
         {/* Image */}
         <Link href={`/product/${perfume.id}`} className="block relative overflow-hidden bg-cream-200 aspect-[3/4] rounded-xl mb-3">
           <Image
@@ -57,7 +57,7 @@ export default function ProductCard({ perfume, index = 0, onQuickAdd }: Props) {
 
         {/* Info + CTA */}
         <div>
-          <p className="label text-ink-300 mb-1">{perfume.brand}</p>
+          <p className="label text-ink-300 group-hover:text-gold-500 transition-colors duration-300 mb-1">{perfume.brand}</p>
           <Link href={`/product/${perfume.id}`}>
             <h3 className="font-display text-lg font-light text-ink-900 hover:text-ink-500 transition-colors duration-200 leading-tight mb-2">
               {perfume.name}
