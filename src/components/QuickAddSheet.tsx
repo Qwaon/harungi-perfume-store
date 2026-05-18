@@ -71,7 +71,7 @@ export default function QuickAddSheet({ perfume, onClose }: Props) {
           {/* Sheet: on mobile sits above BottomNav (56px), on md+ floats bottom-right */}
           <motion.div
             className="quick-add-sheet fixed left-0 right-0 z-50 bg-cream-50 rounded-t-2xl p-6 md:rounded-2xl md:max-w-md"
-            style={{ bottom: 'calc(56px + env(safe-area-inset-bottom, 0px))', paddingBottom: '1.5rem' }}
+            style={{ paddingBottom: '1.5rem' }}
 
             initial={{ y: '100%', opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}

@@ -30,11 +30,9 @@ button, a, [role="button"] {
   touch-action: manipulation;
 }
 
-/* Prevent iOS keyboard zoom on input focus (font-size must be >= 16px) */
-@supports (-webkit-touch-callout: none) {
-  input, select, textarea {
-    font-size: 16px;
-  }
+/* Prevent keyboard zoom on input focus on mobile (font-size must be >= 16px) */
+input, select, textarea {
+  font-size: 16px;
 }
 
 /* Scrollbar — warm tones */
@@ -86,6 +84,20 @@ input[type='range']::-webkit-slider-thumb:hover {
   text-wrap: balance;
 }
 
+/* QuickAddSheet positioning */
+.quick-add-sheet {
+  bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 768px) {
+  .quick-add-sheet {
+    bottom: 1.5rem;
+    left: auto;
+    right: 1.5rem;
+    padding-bottom: 1.5rem;
+  }
+}
+
 @layer components {
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 bg-ink-900 text-cream-50 px-8 py-3.5
@@ -101,6 +113,10 @@ input[type='range']::-webkit-slider-thumb:hover {
     @apply scale-[0.98];
     box-shadow: inset 0px 0px 0px 1px rgba(0,0,0,0.15);
   }
+  .btn-primary:focus-visible {
+    outline: 2px solid #5c6b3f;
+    outline-offset: 3px;
+  }
 
   .btn-outline {
     @apply inline-flex items-center justify-center gap-2 text-ink-900 px-8 py-3.5
@@ -114,6 +130,10 @@ input[type='range']::-webkit-slider-thumb:hover {
   }
   .btn-outline:active {
     @apply scale-[0.98];
+  }
+  .btn-outline:focus-visible {
+    outline: 2px solid #5c6b3f;
+    outline-offset: 3px;
   }
 
   .section-title {

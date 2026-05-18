@@ -78,6 +78,11 @@ export default function CartCheckoutModal({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, status]);
 
+  useEffect(() => {
+    if (isOpen) setOpenedAt(Date.now());
+    else setOpenedAt(null);
+  }, [isOpen]);
+
   const handleClose = () => {
     if (status === 'loading') return;
     onClose();
@@ -87,7 +92,6 @@ export default function CartCheckoutModal({
       setContact('');
       setWebsite('');
       setErrorMsg('');
-      setOpenedAt(null);
     }, 400);
   };
 
@@ -185,9 +189,6 @@ export default function CartCheckoutModal({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 80 }}
               transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-              onAnimationStart={() => {
-                if (openedAt === null) setOpenedAt(Date.now());
-              }}
             >
               <div className="sm:hidden flex justify-center pt-3 pb-0 flex-shrink-0">
                 <div className="w-10 h-1 rounded-full bg-cream-300" />
