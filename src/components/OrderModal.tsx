@@ -1,10 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { OrderPayload, Volume } from '@/types';
+import { lockScroll, unlockScroll } from '@/lib/scrollLock';
 import { trackEvent } from '@/lib/analytics';
 import { TELEGRAM_URL } from '@/lib/constants';
+import {
+  MIN_NAME_LENGTH,
+  MAX_NAME_LENGTH,
+  MIN_CONTACT_LENGTH,
+  MAX_CONTACT_LENGTH,
+  MIN_SUBMIT_DELAY_MS,
+  CLIENT_RATE_LIMIT_MS,
+  LAST_SUBMIT_KEY,
+  detectSource,
+  isValidName,
+  isValidContact,
+} from '@/lib/order';
 
 interface Props {
   isOpen: boolean;
@@ -21,49 +34,6 @@ type Status = 'idle' | 'loading' | 'success' | 'error';
 
 const ORDER_WEBHOOK_URL = process.env.NEXT_PUBLIC_ORDER_WEBHOOK_URL;
 const TELEGRAM_DIRECT_URL = TELEGRAM_URL;
-const MIN_NAME_LENGTH = 2;
-const MAX_NAME_LENGTH = 60;
-const MIN_CONTACT_LENGTH = 4;
-const MAX_CONTACT_LENGTH = 80;
-const MIN_SUBMIT_DELAY_MS = 1500;
-const CLIENT_RATE_LIMIT_MS = 30_000;
-const LAST_SUBMIT_KEY = 'harungi-last-order-submit-at';
-
-function detectSource() {
-  if (typeof window === 'undefined') return 'unknown';
-
-  const params = new URLSearchParams(window.location.search);
-  const rawUtm = params.get('utm_source') ?? '';
-  const utmSource = rawUtm.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 50);
-  if (utmSource) return `utm:${utmSource}`;
-
-  if (document.referrer) {
-    try {
-      const referrerHost = new URL(document.referrer).hostname.replace(/^www\./, '');
-      return `ref:${referrerHost}`;
-    } catch {
-      return 'ref:unknown';
-    }
-  }
-
-  return 'direct';
-}
-
-function isValidName(value: string) {
-  const trimmed = value.trim();
-  return trimmed.length >= MIN_NAME_LENGTH && trimmed.length <= MAX_NAME_LENGTH;
-}
-
-function isValidContact(value: string) {
-  const trimmed = value.trim();
-  if (trimmed.length < MIN_CONTACT_LENGTH || trimmed.length > MAX_CONTACT_LENGTH) return false;
-
-  const telegramLike = /^@?[a-zA-Z0-9_]{4,32}$/;
-  const phoneLike = /^\+?[0-9\s\-()]{7,20}$/;
-  const hasEnoughDigits = trimmed.replace(/\D/g, '').length >= 7;
-
-  return telegramLike.test(trimmed) || (phoneLike.test(trimmed) && hasEnoughDigits);
-}
 
 function createFallbackMessage(payload: OrderPayload) {
   return [
@@ -102,6 +72,18 @@ export default function OrderModal({ isOpen, onClose, perfumeName, perfumeId, br
   const [status, setStatus] = useState<Status>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [openedAt, setOpenedAt] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    lockScroll();
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && status !== 'loading') handleClose(); };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      unlockScroll();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, status]);
 
   const openFallback = (payload: OrderPayload) => {
     const fallbackMsg = createFallbackMessage(payload);
