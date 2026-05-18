@@ -59,12 +59,12 @@ export default function ImageGallery({ images, name }: Props) {
           </motion.div>
         </AnimatePresence>
 
-        {/* Arrow nav (for mobile swipe feel) */}
+        {/* Arrow nav */}
         {images.length > 1 && (
           <>
             <button
               onClick={() => setActive((prev) => (prev - 1 + images.length) % images.length)}
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 bg-cream-50/80 backdrop-blur-sm flex items-center justify-center hover:bg-cream-50 transition-colors"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-cream-50/80 backdrop-blur-sm flex items-center justify-center hover:bg-cream-50 transition-colors"
               aria-label="Предыдущее фото"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -73,7 +73,7 @@ export default function ImageGallery({ images, name }: Props) {
             </button>
             <button
               onClick={() => setActive((prev) => (prev + 1) % images.length)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 bg-cream-50/80 backdrop-blur-sm flex items-center justify-center hover:bg-cream-50 transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-cream-50/80 backdrop-blur-sm flex items-center justify-center hover:bg-cream-50 transition-colors"
               aria-label="Следующее фото"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -81,6 +81,22 @@ export default function ImageGallery({ images, name }: Props) {
               </svg>
             </button>
           </>
+        )}
+
+        {/* Dot indicators */}
+        {images.length > 1 && (
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+            {images.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setActive(i)}
+                aria-label={`Фото ${i + 1}`}
+                className={`rounded-full bg-ink-900/70 transition-all duration-300 ${
+                  i === active ? 'w-4 h-1.5' : 'w-1.5 h-1.5 opacity-40'
+                }`}
+              />
+            ))}
+          </div>
         )}
       </div>
 
