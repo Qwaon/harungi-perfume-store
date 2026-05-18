@@ -35,7 +35,7 @@ export default function ImageGallery({ images, name }: Props) {
     <div className="flex flex-col gap-4">
       {/* Main image */}
       <div
-        className="relative overflow-hidden bg-cream-200 aspect-square rounded-sm"
+        className="relative overflow-hidden bg-cream-200 aspect-square rounded-xl"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -107,7 +107,7 @@ export default function ImageGallery({ images, name }: Props) {
             <button
               key={src}
               onClick={() => setActive(i)}
-              className={`relative overflow-hidden aspect-square flex-1 rounded-sm transition-all duration-200 ${
+              className={`relative overflow-hidden aspect-square flex-1 rounded-lg transition-all duration-200 ${
                 active === i
                   ? 'ring-1 ring-ink-900 ring-offset-2 ring-offset-cream-100'
                   : 'opacity-50 hover:opacity-80'

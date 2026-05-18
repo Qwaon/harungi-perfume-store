@@ -16,7 +16,8 @@ export default function FAQItem({ q, a, index }: Props) {
     <motion.div
       className="border-b border-cream-200"
       initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
       transition={{ duration: 0.4, delay: index * 0.05 }}
     >
       <button
