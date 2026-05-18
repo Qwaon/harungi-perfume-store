@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { CartItem } from '@/types';
+import { lockScroll, unlockScroll } from '@/lib/scrollLock';
 
 interface CartContextValue {
   items: CartItem[];
@@ -26,11 +27,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const saved = localStorage.getItem('harungi-cart');
       if (saved) setItems(JSON.parse(saved));
     } catch {}
+    setIsOpen(false);
   }, []);
 
   useEffect(() => {
     localStorage.setItem('harungi-cart', JSON.stringify(items));
   }, [items]);
+
+  useEffect(() => {
+    if (isOpen) {
+      lockScroll();
+      return () => unlockScroll();
+    }
+  }, [isOpen]);
 
   const addItem = (item: CartItem) => {
     setItems((prev) => {
