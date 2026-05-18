@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 
 const STEPS = [
   {
@@ -33,9 +36,17 @@ export default function HowToOrder() {
         </Link>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-        {STEPS.map((step) => (
+        {STEPS.map((step, i) => (
           <div key={step.num} className="flex flex-col gap-3">
-            <span className="font-display text-4xl font-light text-cream-300">{step.num}</span>
+            <motion.span
+              className="font-display text-4xl font-light text-cream-300"
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] }}
+            >
+              {step.num}
+            </motion.span>
             <h3 className="font-medium text-ink-900 text-sm tracking-wide">{step.title}</h3>
             <p className="text-xs text-ink-500 leading-relaxed">{step.desc}</p>
           </div>
