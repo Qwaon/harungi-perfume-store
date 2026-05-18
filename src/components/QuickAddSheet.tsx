@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Perfume, Volume, CartItem } from '@/types';
+import { lockScroll, unlockScroll } from '@/lib/scrollLock';
 import { VOLUME_LABELS } from '@/lib/constants';
 import { useCart } from '@/contexts/CartContext';
 
@@ -16,6 +17,22 @@ export default function QuickAddSheet({ perfume, onClose }: Props) {
   const [selected, setSelected] = useState<Volume | null>(null);
   const [added, setAdded] = useState(false);
 
+  useEffect(() => {
+    setSelected(null);
+    setAdded(false);
+  }, [perfume?.id]);
+
+  useEffect(() => {
+    if (!perfume) return;
+    lockScroll();
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      unlockScroll();
+    };
+  }, [perfume, onClose]);
+
   const handleAdd = () => {
     if (!selected || !perfume) return;
     const price = perfume.prices[selected];
@@ -27,6 +44,7 @@ export default function QuickAddSheet({ perfume, onClose }: Props) {
       volume: selected,
       volumeLabel: VOLUME_LABELS[selected],
       price,
+      imageUrl: perfume.images[0],
     };
     addItem(item);
     setAdded(true);
@@ -50,10 +68,11 @@ export default function QuickAddSheet({ perfume, onClose }: Props) {
             onClick={onClose}
           />
 
-          {/* Sheet */}
+          {/* Sheet: on mobile sits above BottomNav (56px), on md+ floats bottom-right */}
           <motion.div
-            className="fixed bottom-0 left-0 right-0 z-50 bg-cream-50 rounded-t-2xl p-6 md:max-w-md md:left-auto md:right-6 md:bottom-6 md:rounded-2xl"
-            style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))' }}
+            className="quick-add-sheet fixed left-0 right-0 z-50 bg-cream-50 rounded-t-2xl p-6 md:rounded-2xl md:max-w-md"
+            style={{ bottom: 'calc(56px + env(safe-area-inset-bottom, 0px))', paddingBottom: '1.5rem' }}
+
             initial={{ y: '100%', opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: '100%', opacity: 0 }}

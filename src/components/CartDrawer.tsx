@@ -1,16 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/contexts/CartContext';
 import CartCheckoutModal from '@/components/CartCheckoutModal';
-import { perfumes } from '@/data/perfumes';
-
 export default function CartDrawer() {
   const { items, removeItem, clearCart, total, count, isOpen, closeCart } = useCart();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeCart(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [isOpen, closeCart]);
 
   return (
     <>
@@ -30,6 +35,9 @@ export default function CartDrawer() {
             {/* Modal — centered on desktop, bottom sheet on mobile */}
             <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-6 pointer-events-none">
               <motion.div
+                role="dialog"
+                aria-modal="true"
+                aria-label="Корзина"
                 className="pointer-events-auto w-full sm:max-w-lg bg-cream-50 rounded-t-3xl sm:rounded-2xl flex flex-col"
                 style={{
                   maxHeight: '88dvh',
@@ -93,8 +101,6 @@ export default function CartDrawer() {
                   ) : (
                     <div className="flex flex-col gap-2">
                       {items.map((item) => {
-                        const perfume = perfumes.find((p) => p.id === item.perfumeId);
-                        const image = perfume?.images[0];
                         return (
                           <div
                             key={`${item.perfumeId}-${item.volume}`}
@@ -102,9 +108,9 @@ export default function CartDrawer() {
                           >
                             {/* Thumbnail */}
                             <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-cream-200 flex-shrink-0">
-                              {image && (
+                              {item.imageUrl && (
                                 <Image
-                                  src={image}
+                                  src={item.imageUrl}
                                   alt={item.perfumeName}
                                   fill
                                   sizes="64px"

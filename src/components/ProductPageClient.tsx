@@ -43,6 +43,7 @@ export default function ProductPageClient({ perfume, related }: Props) {
       volume: selectedVolume,
       volumeLabel: getVolumeLabel(),
       price,
+      imageUrl: perfume.images[0],
     });
     openCart();
   };
