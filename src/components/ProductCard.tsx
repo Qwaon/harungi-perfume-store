@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Perfume } from '@/types';
+import { useFavorites } from '@/contexts/FavoritesContext';
 
 interface Props {
   perfume: Perfume;
@@ -14,6 +15,8 @@ interface Props {
 
 export default function ProductCard({ perfume, index = 0, onQuickAdd, priority = false }: Props) {
   const minPrice = Math.min(...Object.values(perfume.prices));
+  const { isFavorite, toggle } = useFavorites();
+  const fav = isFavorite(perfume.id);
 
   return (
     <motion.div
@@ -33,6 +36,18 @@ export default function ProductCard({ perfume, index = 0, onQuickAdd, priority =
             priority={priority}
           />
           <div className="absolute inset-0 bg-ink-900/0 group-hover:bg-ink-900/5 transition-colors duration-500 rounded-xl" />
+
+          <button
+            type="button"
+            onClick={(e) => { e.preventDefault(); toggle(perfume.id); }}
+            className="absolute top-2 right-2 w-11 h-11 flex items-center justify-center rounded-full bg-cream-50/80 backdrop-blur-sm hover:bg-cream-50 transition-colors"
+            aria-label={fav ? 'Убрать из избранного' : 'В избранное'}
+            aria-pressed={fav}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill={fav ? '#5c6b3f' : 'none'} stroke="#5c6b3f" strokeWidth="1.8">
+              <path d="M12 21s-7.5-4.6-10-9.2C.6 9 1.6 5.5 5 5.5c2 0 3.2 1.2 4 2.3.8-1.1 2-2.3 4-2.3 3.4 0 4.4 3.5 3 6.3C19.5 16.4 12 21 12 21Z" strokeLinejoin="round" />
+            </svg>
+          </button>
 
           {/* Badges */}
           <div className="absolute top-3 left-3 flex flex-col gap-1.5">

@@ -10,6 +10,7 @@ import VolumeSelector from '@/components/VolumeSelector';
 import OrderModal from '@/components/OrderModal';
 import ProductCard from '@/components/ProductCard';
 import { useCart } from '@/contexts/CartContext';
+import { useFavorites } from '@/contexts/FavoritesContext';
 import { Perfume, Volume } from '@/types';
 
 interface Props {
@@ -27,6 +28,8 @@ export default function ProductPageClient({ perfume, related }: Props) {
   }, [perfume.id, perfume.brand]);
 
   const price = perfume.prices[selectedVolume] ?? 0;
+  const { isFavorite, toggle } = useFavorites();
+  const fav = isFavorite(perfume.id);
 
   const getVolumeLabel = () => {
     if (selectedVolume === 'original' && perfume.originalVolumeMl) {
@@ -99,9 +102,22 @@ export default function ProductPageClient({ perfume, related }: Props) {
                     </span>
                   )}
                 </div>
-                <h1 className="font-display text-4xl md:text-5xl font-light text-ink-900 leading-tight mb-4">
-                  {perfume.name}
-                </h1>
+                <div className="flex items-start justify-between gap-3 mb-4">
+                  <h1 className="font-display text-4xl md:text-5xl font-light text-ink-900 leading-tight">
+                    {perfume.name}
+                  </h1>
+                  <button
+                    type="button"
+                    onClick={() => toggle(perfume.id)}
+                    className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-cream-200 transition-colors flex-shrink-0"
+                    aria-label={fav ? 'Убрать из избранного' : 'В избранное'}
+                    aria-pressed={fav}
+                  >
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill={fav ? '#5c6b3f' : 'none'} stroke="#5c6b3f" strokeWidth="1.8">
+                      <path d="M12 21s-7.5-4.6-10-9.2C.6 9 1.6 5.5 5 5.5c2 0 3.2 1.2 4 2.3.8-1.1 2-2.3 4-2.3 3.4 0 4.4 3.5 3 6.3C19.5 16.4 12 21 12 21Z" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                </div>
                 <div className="flex items-center gap-3">
                   <span className="label text-ink-300 capitalize">{perfume.gender}</span>
                   <span className="w-1 h-1 bg-ink-300 rounded-full" />
