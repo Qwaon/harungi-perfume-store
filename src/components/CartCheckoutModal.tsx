@@ -70,7 +70,13 @@ export default function CartCheckoutModal({
   const [status, setStatus] = useState<Status>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [openedAt, setOpenedAt] = useState<number | null>(null);
-  const { isTelegram } = useTelegram();
+  const { isTelegram, user } = useTelegram();
+
+  // В Telegram имя — из профиля, контакт = @username, если он есть.
+  const tgName = user ? [user.first_name, user.last_name].filter(Boolean).join(' ') : '';
+  const tgUsername = user?.username ? `@${user.username}` : '';
+  const tgOrder = isTelegram === true && !!user;
+  const tgHasContact = tgOrder && !!tgUsername;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -103,8 +109,8 @@ export default function CartCheckoutModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmedName = name.trim();
-    const trimmedContact = contact.trim();
+    const trimmedName = (tgOrder ? tgName : name).trim();
+    const trimmedContact = (tgHasContact ? tgUsername : contact).trim();
 
     if (website.trim() !== '') { setStatus('success'); return; }
     if (!isValidName(trimmedName)) {
@@ -298,34 +304,51 @@ export default function CartCheckoutModal({
                             onChange={(e) => setWebsite(e.target.value)}
                           />
                         </div>
-                        <div>
-                          <label htmlFor="cart-name" className="label text-ink-500 block mb-2">Ваше имя *</label>
-                          <input
-                            id="cart-name"
-                            type="text"
-                            required
-                            autoComplete="name"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            placeholder="Как к вам обращаться"
-                            className="input-base"
-                          />
-                        </div>
-                        <div>
-                          <label htmlFor="cart-contact" className="label text-ink-500 block mb-2">
-                            Telegram или телефон *
-                          </label>
-                          <input
-                            id="cart-contact"
-                            type="text"
-                            required
-                            autoComplete="tel"
-                            value={contact}
-                            onChange={(e) => setContact(e.target.value)}
-                            placeholder="@username или +7 900 000-00-00"
-                            className="input-base"
-                          />
-                        </div>
+                        {tgOrder ? (
+                          <div
+                            className="bg-cream-100 rounded-xl px-4 py-3 flex items-center justify-between"
+                            style={{ boxShadow: '0px 0px 0px 1px #e8e6dc' }}
+                          >
+                            <div>
+                              <p className="label text-ink-300 mb-0.5">Получатель</p>
+                              <p className="text-ink-900 text-sm">
+                                {tgName}{tgUsername && <span className="text-ink-300"> · {tgUsername}</span>}
+                              </p>
+                            </div>
+                            <span className="text-xs text-gold-500">из Telegram</span>
+                          </div>
+                        ) : (
+                          <div>
+                            <label htmlFor="cart-name" className="label text-ink-500 block mb-2">Ваше имя *</label>
+                            <input
+                              id="cart-name"
+                              type="text"
+                              required
+                              autoComplete="name"
+                              value={name}
+                              onChange={(e) => setName(e.target.value)}
+                              placeholder="Как к вам обращаться"
+                              className="input-base"
+                            />
+                          </div>
+                        )}
+                        {!tgHasContact && (
+                          <div>
+                            <label htmlFor="cart-contact" className="label text-ink-500 block mb-2">
+                              Telegram или телефон *
+                            </label>
+                            <input
+                              id="cart-contact"
+                              type="text"
+                              required
+                              autoComplete="tel"
+                              value={contact}
+                              onChange={(e) => setContact(e.target.value)}
+                              placeholder="@username или +7 900 000-00-00"
+                              className="input-base"
+                            />
+                          </div>
+                        )}
                         {status === 'error' && (
                           <div
                             role="alert"
@@ -358,7 +381,7 @@ export default function CartCheckoutModal({
                               Отправляем...
                             </span>
                           ) : (
-                            'Отправить заявку'
+                            tgHasContact ? 'Заказать' : 'Отправить заявку'
                           )}
                         </button>
                         <p className="text-xs text-ink-300 text-center">

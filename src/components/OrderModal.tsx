@@ -74,7 +74,13 @@ export default function OrderModal({ isOpen, onClose, perfumeName, perfumeId, br
   const [status, setStatus] = useState<Status>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [openedAt, setOpenedAt] = useState<number | null>(null);
-  const { isTelegram } = useTelegram();
+  const { isTelegram, user } = useTelegram();
+
+  // В Telegram имя берём из профиля; контакт = @username, если он есть.
+  const tgName = user ? [user.first_name, user.last_name].filter(Boolean).join(' ') : '';
+  const tgUsername = user?.username ? `@${user.username}` : '';
+  const tgOrder = isTelegram === true && !!user; // заказ без ручного ввода имени
+  const tgHasContact = tgOrder && !!tgUsername; // username есть → контакт не спрашиваем
 
   useEffect(() => {
     if (!isOpen) return;
@@ -95,8 +101,9 @@ export default function OrderModal({ isOpen, onClose, perfumeName, perfumeId, br
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmedName = name.trim();
-    const trimmedContact = contact.trim();
+    // В Telegram имя — из профиля; контакт — @username, если есть.
+    const trimmedName = (tgOrder ? tgName : name).trim();
+    const trimmedContact = (tgHasContact ? tgUsername : contact).trim();
 
     if (website.trim() !== '') {
       setStatus('success');
@@ -285,14 +292,31 @@ export default function OrderModal({ isOpen, onClose, perfumeName, perfumeId, br
                             onChange={(e) => setWebsite(e.target.value)}
                           />
                         </div>
-                        <div>
-                          <label htmlFor="order-name" className="label text-ink-500 block mb-2">Ваше имя *</label>
-                          <input id="order-name" type="text" required autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Как к вам обращаться" className="input-base" />
-                        </div>
-                        <div>
-                          <label htmlFor="order-contact" className="label text-ink-500 block mb-2">Telegram или телефон *</label>
-                          <input id="order-contact" type="text" required autoComplete="tel" value={contact} onChange={(e) => setContact(e.target.value)} placeholder="@username или +7 900 000-00-00" className="input-base" />
-                        </div>
+                        {tgOrder ? (
+                          <div
+                            className="bg-cream-100 rounded-xl px-4 py-3 flex items-center justify-between"
+                            style={{ boxShadow: '0px 0px 0px 1px #e8e6dc' }}
+                          >
+                            <div>
+                              <p className="label text-ink-300 mb-0.5">Получатель</p>
+                              <p className="text-ink-900 text-sm">
+                                {tgName}{tgUsername && <span className="text-ink-300"> · {tgUsername}</span>}
+                              </p>
+                            </div>
+                            <span className="text-xs text-gold-500">из Telegram</span>
+                          </div>
+                        ) : (
+                          <div>
+                            <label htmlFor="order-name" className="label text-ink-500 block mb-2">Ваше имя *</label>
+                            <input id="order-name" type="text" required autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Как к вам обращаться" className="input-base" />
+                          </div>
+                        )}
+                        {!tgHasContact && (
+                          <div>
+                            <label htmlFor="order-contact" className="label text-ink-500 block mb-2">Telegram или телефон *</label>
+                            <input id="order-contact" type="text" required autoComplete="tel" value={contact} onChange={(e) => setContact(e.target.value)} placeholder="@username или +7 900 000-00-00" className="input-base" />
+                          </div>
+                        )}
 
                         {status === 'error' && (
                           <div role="alert" className="text-sm bg-cream-100 rounded-xl px-4 py-3" style={{ boxShadow: '0px 0px 0px 1px #e8e6dc' }}>
@@ -321,7 +345,7 @@ export default function OrderModal({ isOpen, onClose, perfumeName, perfumeId, br
                               />
                               Отправляем...
                             </span>
-                          ) : 'Отправить заявку'}
+                          ) : tgHasContact ? 'Заказать' : 'Отправить заявку'}
                         </button>
 
                         <p className="text-xs text-ink-300 text-center">
