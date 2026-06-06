@@ -183,3 +183,54 @@ input[type='range']::-webkit-slider-thumb:hover {
     box-shadow: 0px 0px 0px 1px #5c6b3f, 0px 0px 0px 3px rgba(92, 107, 63, 0.08);
   }
 }
+
+/* ── Telegram Mini App: форсим мобильный вид ──────────────────────────────
+   .tg-app ставится на <html> компонентом TelegramShell внутри Telegram.
+   Telegram Desktop — Chromium на широком окне, поэтому md:/lg: брейкпоинты
+   срабатывают по ширине окна. Сменой <meta viewport> на десктопе это не
+   лечится (проверено) — точечно возвращаем мобильную вёрстку. */
+
+/* 1) Колонка телефона по центру, фон по бокам */
+.tg-app {
+  --tg-w: 480px;
+}
+.tg-app body {
+  max-width: var(--tg-w);
+  margin-inline: auto;
+  background-color: #f5f4ed;
+  box-shadow: 0 0 0 100vmax #e8e6dc;
+  clip-path: inset(0 -100vmax);
+}
+/* Фиксированные панели (Header, BottomNav, CTA товара) — в ту же колонку */
+.tg-app header.fixed,
+.tg-app nav.fixed,
+.tg-app .fixed.left-0.right-0 {
+  left: 50% !important;
+  right: auto !important;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: var(--tg-w);
+}
+
+/* 2) Header: прячем десктоп-навигацию, показываем мобильную */
+.tg-app header nav.md\:flex { display: none !important; }
+.tg-app header .md\:h-20 { height: 4rem !important; }
+
+/* 3) BottomNav: всегда показываем (снимаем md:hidden) */
+.tg-app nav.md\:hidden { display: flex !important; }
+
+/* 4) CTA-панель товара (md:hidden) — показываем; десктоп-блок заметок прячем */
+.tg-app .md\:hidden { display: block !important; }
+.tg-app .hidden.md\:flex { display: none !important; }
+
+/* 5) Сетки товаров: всегда 2 колонки (как на мобиле) */
+.tg-app .lg\:grid-cols-3,
+.tg-app .lg\:grid-cols-4,
+.tg-app .xl\:grid-cols-4,
+.tg-app .md\:grid-cols-3 {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+/* Страница товара: одна колонка */
+.tg-app .lg\:grid-cols-2 {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
