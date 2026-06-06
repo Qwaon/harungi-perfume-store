@@ -3,10 +3,12 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCart } from '@/contexts/CartContext';
+import { useTelegram } from '@/contexts/TelegramContext';
 
 export default function BottomNav() {
   const pathname = usePathname();
   const { count, openCart } = useCart();
+  const { isTelegram } = useTelegram();
 
   const isActive = (href: string) =>
     href === '/' ? pathname === '/' : pathname.startsWith(href);
@@ -56,6 +58,18 @@ export default function BottomNav() {
         </span>
         Корзина
       </button>
+
+      {isTelegram && (
+        <Link
+          href="/account"
+          className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-3 text-[10px] tracking-wider uppercase transition-colors ${isActive('/account') ? activeClass : inactiveClass}`}
+        >
+          <svg width="20" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm0 1.5c-2.7 0-5 1.4-5 3.4V14h10v-1.1c0-2-2.3-3.4-5-3.4Z" />
+          </svg>
+          Аккаунт
+        </Link>
+      )}
     </nav>
   );
 }
