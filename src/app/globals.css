@@ -11,6 +11,33 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Global focus-visible — keyboard users get a clear ring on any interactive
+   element that doesn't define its own (.btn-* and .input-base override below). */
+a:focus-visible,
+button:focus-visible,
+select:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:not([tabindex="-1"]):focus-visible {
+  outline: 2px solid #5c6b3f;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Respect user's reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 body {
   background-color: #f5f4ed;
   color: #141413;

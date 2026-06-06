@@ -49,6 +49,7 @@ export interface CartItem {
   volume: Volume;
   volumeLabel: string;
   price: number;
+  quantity: number;
   imageUrl?: string;
 }
 

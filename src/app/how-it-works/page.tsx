@@ -37,7 +37,7 @@ const questions = [
 
 export default function HowItWorksPage() {
   return (
-    <div className="min-h-screen pt-28 md:pt-36">
+    <div className="min-h-dvh pt-28 md:pt-36">
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
         <div className="max-w-2xl mb-16 md:mb-20">
           <p className="label text-gold-500 mb-4">Процесс заказа</p>

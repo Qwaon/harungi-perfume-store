@@ -6,8 +6,9 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/contexts/CartContext';
 import CartCheckoutModal from '@/components/CartCheckoutModal';
+import { pluralizeRu, POSITION_FORMS } from '@/lib/plural';
 export default function CartDrawer() {
-  const { items, removeItem, clearCart, total, count, isOpen, closeCart } = useCart();
+  const { items, removeItem, updateQuantity, clearCart, total, count, isOpen, closeCart } = useCart();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   useEffect(() => {
@@ -59,7 +60,7 @@ export default function CartDrawer() {
                     <h2 className="font-display text-2xl font-light text-ink-900">Корзина</h2>
                     {count > 0 && (
                       <span className="text-xs text-ink-300 tabular-nums">
-                        {count} {count === 1 ? 'позиция' : count < 5 ? 'позиции' : 'позиций'}
+                        {count} {pluralizeRu(count, POSITION_FORMS)}
                       </span>
                     )}
                   </div>
@@ -104,7 +105,7 @@ export default function CartDrawer() {
                         return (
                           <div
                             key={`${item.perfumeId}-${item.volume}`}
-                            className="flex items-center gap-4 py-3 border-b border-cream-200 last:border-0"
+                            className="flex items-start gap-4 py-3 border-b border-cream-200 last:border-0"
                           >
                             {/* Thumbnail */}
                             <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-cream-200 flex-shrink-0">
@@ -127,20 +128,54 @@ export default function CartDrawer() {
                               </p>
                               <div className="flex items-baseline gap-2 mt-1">
                                 <p className="font-display text-base font-light text-ink-900 tabular-nums">
-                                  {item.price.toLocaleString('ru-RU')} ₽
+                                  {(item.price * item.quantity).toLocaleString('ru-RU')} ₽
                                 </p>
                                 <span className="text-xs text-ink-300">{item.volumeLabel}</span>
+                                {item.quantity > 1 && (
+                                  <span className="text-xs text-ink-300 tabular-nums">
+                                    · {item.price.toLocaleString('ru-RU')} ₽ × {item.quantity}
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Quantity stepper */}
+                              <div className="flex items-center gap-1 mt-2">
+                                <button
+                                  onClick={() => updateQuantity(item.perfumeId, item.volume, item.quantity - 1)}
+                                  className="w-8 h-8 rounded-full flex items-center justify-center border border-cream-200 text-ink-700 hover:border-ink-500 hover:bg-cream-100 transition-colors"
+                                  aria-label={`Уменьшить количество ${item.perfumeName}`}
+                                >
+                                  <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
+                                    <path d="M1 5.5h9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                                  </svg>
+                                </button>
+                                <span
+                                  className="w-8 text-center text-sm text-ink-900 tabular-nums"
+                                  aria-live="polite"
+                                  aria-label={`Количество: ${item.quantity}`}
+                                >
+                                  {item.quantity}
+                                </span>
+                                <button
+                                  onClick={() => updateQuantity(item.perfumeId, item.volume, item.quantity + 1)}
+                                  className="w-8 h-8 rounded-full flex items-center justify-center border border-cream-200 text-ink-700 hover:border-ink-500 hover:bg-cream-100 transition-colors"
+                                  aria-label={`Увеличить количество ${item.perfumeName}`}
+                                >
+                                  <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
+                                    <path d="M5.5 1v9M1 5.5h9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                                  </svg>
+                                </button>
                               </div>
                             </div>
 
                             {/* Remove — min 44px touch target */}
                             <button
                               onClick={() => removeItem(item.perfumeId, item.volume)}
-                              className="w-11 h-11 -mr-2 rounded-full flex items-center justify-center hover:bg-cream-200 transition-colors flex-shrink-0"
+                              className="w-11 h-11 -mr-2 rounded-full flex items-center justify-center hover:bg-cream-200 transition-colors flex-shrink-0 self-start"
                               aria-label={`Удалить ${item.perfumeName}`}
                             >
                               <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
-                                <path d="M1 1l12 12M13 1L1 13" stroke="#87867f" strokeWidth="1.6" strokeLinecap="round" />
+                                <path d="M1 1l12 12M13 1L1 13" stroke="#6e6d66" strokeWidth="1.6" strokeLinecap="round" />
                               </svg>
                             </button>
                           </div>

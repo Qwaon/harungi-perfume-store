@@ -6,6 +6,7 @@ import { CartProvider } from '@/contexts/CartContext';
 import CartDrawer from '@/components/CartDrawer';
 import BottomNav from '@/components/BottomNav';
 import PageTransition from '@/components/PageTransition';
+import MotionProvider from '@/components/MotionProvider';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -45,16 +46,24 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ru">
-      <body className="min-h-screen flex flex-col">
-        <CartProvider>
-          <Header />
-          <CartDrawer />
-          <main className="flex-1 pb-20 md:pb-0">
-            <PageTransition>{children}</PageTransition>
-          </main>
-          <Footer />
-          <BottomNav />
-        </CartProvider>
+      <body className="min-h-dvh flex flex-col">
+        <MotionProvider>
+          <CartProvider>
+            <a
+              href="#main-content"
+              className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:bg-ink-900 focus:text-cream-50 focus:px-4 focus:py-2 focus:rounded-full focus:text-sm"
+            >
+              Перейти к содержимому
+            </a>
+            <Header />
+            <CartDrawer />
+            <main id="main-content" className="flex-1 pb-20 md:pb-0">
+              <PageTransition>{children}</PageTransition>
+            </main>
+            <Footer />
+            <BottomNav />
+          </CartProvider>
+        </MotionProvider>
       </body>
     </html>
   );

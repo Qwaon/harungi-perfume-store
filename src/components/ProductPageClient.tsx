@@ -43,6 +43,7 @@ export default function ProductPageClient({ perfume, related }: Props) {
       volume: selectedVolume,
       volumeLabel: getVolumeLabel(),
       price,
+      quantity: 1,
       imageUrl: perfume.images[0],
     });
     openCart();
@@ -50,7 +51,7 @@ export default function ProductPageClient({ perfume, related }: Props) {
 
   return (
     <>
-      <div className="min-h-screen pt-24 md:pt-32 pb-36 md:pb-24">
+      <div className="min-h-dvh pt-24 md:pt-32 pb-36 md:pb-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-2 text-xs text-ink-300 mb-6 md:mb-10">
@@ -168,28 +169,36 @@ export default function ProductPageClient({ perfume, related }: Props) {
                 <p className="text-ink-500 leading-relaxed text-base">{perfume.description}</p>
               </div>
 
-              {/* Notes pyramid */}
-              <div className="border-t border-cream-200 pt-8">
-                <p className="label text-gold-500 mb-5">Пирамида аромата</p>
-                <div className="grid grid-cols-3 gap-3 sm:gap-6">
-                  {[
-                    { label: 'Верхние', notes: perfume.notes.top },
-                    { label: 'Сердце', notes: perfume.notes.middle },
-                    { label: 'База', notes: perfume.notes.base },
-                  ].map(({ label, notes }) => (
-                    <div key={label}>
-                      <p className="label text-ink-300 mb-3">{label}</p>
-                      <ul className="flex flex-col gap-1">
-                        {notes.map((note) => (
-                          <li key={note} className="text-sm text-ink-700">
-                            {note}
-                          </li>
-                        ))}
-                      </ul>
+              {/* Notes pyramid — only render columns that have notes; hide section entirely when empty */}
+              {(() => {
+                const pyramid = [
+                  { label: 'Верхние', notes: perfume.notes.top },
+                  { label: 'Сердце', notes: perfume.notes.middle },
+                  { label: 'База', notes: perfume.notes.base },
+                ].filter(({ notes }) => notes.length > 0);
+
+                if (pyramid.length === 0) return null;
+
+                return (
+                  <div className="border-t border-cream-200 pt-8">
+                    <p className="label text-gold-500 mb-5">Пирамида аромата</p>
+                    <div className="grid grid-cols-3 gap-3 sm:gap-6">
+                      {pyramid.map(({ label, notes }) => (
+                        <div key={label}>
+                          <p className="label text-ink-300 mb-3">{label}</p>
+                          <ul className="flex flex-col gap-1">
+                            {notes.map((note) => (
+                              <li key={note} className="text-sm text-ink-700">
+                                {note}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </div>
+                  </div>
+                );
+              })()}
 
               <div className="border-t border-cream-200 pt-8">
                 <p className="label text-gold-500 mb-5">Когда носить</p>

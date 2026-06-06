@@ -6,7 +6,7 @@ export const metadata = {
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center">
+    <div className="min-h-dvh flex flex-col items-center justify-center px-6 text-center">
       <p className="label text-gold-500 mb-4">404</p>
       <h1 className="font-display text-5xl md:text-7xl font-light text-ink-900 mb-6">
         Страница не найдена

@@ -8,6 +8,7 @@ import ProductCard from './ProductCard';
 import QuickAddSheet from './QuickAddSheet';
 import { Perfume, FilterState } from '@/types';
 import { brands, genders, scentTypes, formats } from '@/data/perfumes';
+import { pluralizeRu, POSITION_FORMS } from '@/lib/plural';
 
 interface Props {
   perfumes: Perfume[];
@@ -130,7 +131,8 @@ export default function CatalogClient({ perfumes }: Props) {
           {search && (
             <button
               onClick={() => setSearch('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-cream-200 hover:bg-cream-300 flex items-center justify-center transition-colors"
+              aria-label="Очистить поиск"
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full hover:bg-cream-200 flex items-center justify-center transition-colors"
             >
               <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
                 <path d="M1 1l8 8M9 1L1 9" stroke="#5e5d59" strokeWidth="1.4" strokeLinecap="round" />
@@ -193,7 +195,7 @@ export default function CatalogClient({ perfumes }: Props) {
       </div>
 
       {/* Results count */}
-      <p className="text-sm text-ink-300 mb-4">{filtered.length} позиций</p>
+      <p className="text-sm text-ink-300 mb-4">{filtered.length} {pluralizeRu(filtered.length, POSITION_FORMS)}</p>
 
       {/* Grid */}
       {filtered.length > 0 ? (
@@ -271,6 +273,9 @@ export default function CatalogClient({ perfumes }: Props) {
               onClick={() => setMoreOpen(false)}
             />
             <motion.aside
+              role="dialog"
+              aria-modal="true"
+              aria-label="Фильтры каталога"
               className="fixed inset-y-0 right-0 z-50 w-[85vw] max-w-[340px] bg-cream-50 shadow-2xl overflow-y-auto flex flex-col"
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
@@ -281,7 +286,8 @@ export default function CatalogClient({ perfumes }: Props) {
                 <p className="font-semibold text-ink-900">Ещё фильтры</p>
                 <button
                   onClick={() => setMoreOpen(false)}
-                  className="w-8 h-8 rounded-full bg-cream-100 flex items-center justify-center hover:bg-cream-200 transition-colors"
+                  aria-label="Закрыть фильтры"
+                  className="w-11 h-11 rounded-full bg-cream-100 flex items-center justify-center hover:bg-cream-200 transition-colors"
                 >
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                     <path d="M1 1l12 12M13 1L1 13" stroke="#141413" strokeWidth="1.5" strokeLinecap="round" />
@@ -339,7 +345,7 @@ export default function CatalogClient({ perfumes }: Props) {
 
               <div className="p-5 border-t border-cream-200 sticky bottom-0 bg-cream-50" style={{ paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom, 0px))' }}>
                 <button onClick={() => setMoreOpen(false)} className="btn-primary w-full">
-                  Показать {filtered.length} позиций
+                  Показать {filtered.length} {pluralizeRu(filtered.length, POSITION_FORMS)}
                 </button>
               </div>
             </motion.aside>
