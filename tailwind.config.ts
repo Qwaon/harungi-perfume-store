@@ -25,7 +25,7 @@ const config: Config = {
           800: '#1e1e1c',   // dark alt
           700: '#30302e',   // dark surface — тёмные секции
           500: '#5e5d59',   // olive gray — вторичный текст
-          300: '#87867f',   // stone gray — третичный текст
+          300: '#6e6d66',   // stone gray — третичный текст (AA 4.5:1 на cream)
         },
       },
       fontFamily: {

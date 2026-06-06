@@ -33,7 +33,7 @@ export default function BrandCatalogPage({ params }: Props) {
   if (brandPerfumes.length === 0) notFound();
 
   return (
-    <div className="min-h-screen pt-28 md:pt-36">
+    <div className="min-h-dvh pt-28 md:pt-36">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="mb-12 md:mb-16">
           <p className="label text-gold-500 mb-3">Брендовая подборка</p>

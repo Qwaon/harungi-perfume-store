@@ -17,7 +17,7 @@ export default function MensEverydayPage() {
     .slice(0, 6);
 
   return (
-    <div className="min-h-screen pt-28 md:pt-36">
+    <div className="min-h-dvh pt-28 md:pt-36">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="max-w-3xl mb-14">
           <p className="label text-gold-500 mb-3">Подборка</p>

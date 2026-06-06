@@ -44,6 +44,7 @@ export default function QuickAddSheet({ perfume, onClose }: Props) {
       volume: selected,
       volumeLabel: VOLUME_LABELS[selected],
       price,
+      quantity: 1,
       imageUrl: perfume.images[0],
     };
     addItem(item);
@@ -70,6 +71,9 @@ export default function QuickAddSheet({ perfume, onClose }: Props) {
 
           {/* Sheet: on mobile sits above BottomNav (56px), on md+ floats bottom-right */}
           <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Выбор объёма — ${perfume.name}`}
             className="quick-add-sheet fixed left-0 right-0 z-50 bg-cream-50 rounded-t-2xl p-6 md:rounded-2xl md:max-w-md"
             style={{ paddingBottom: '1.5rem' }}
 
@@ -88,7 +92,7 @@ export default function QuickAddSheet({ perfume, onClose }: Props) {
               </div>
               <button
                 onClick={onClose}
-                className="w-8 h-8 rounded-full bg-cream-100 flex items-center justify-center hover:bg-cream-200 transition-colors shrink-0 ml-4"
+                className="w-11 h-11 rounded-full bg-cream-100 flex items-center justify-center hover:bg-cream-200 transition-colors shrink-0 ml-4"
                 aria-label="Закрыть"
               >
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none">

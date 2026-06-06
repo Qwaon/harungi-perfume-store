@@ -43,7 +43,7 @@ const faqs = [
 
 export default function FAQPage() {
   return (
-    <div className="min-h-screen pt-28 md:pt-36">
+    <div className="min-h-dvh pt-28 md:pt-36">
       <div className="max-w-3xl mx-auto px-4 sm:px-6">
         {/* Header */}
         <div className="mb-12 md:mb-16">

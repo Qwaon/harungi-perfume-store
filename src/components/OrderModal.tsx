@@ -191,6 +191,9 @@ export default function OrderModal({ isOpen, onClose, perfumeName, perfumeId, br
           {/* Bottom sheet on mobile, centered dialog on sm+ */}
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 pointer-events-none">
             <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-label={`Оформить заявку — ${perfumeName}`}
               className="w-full sm:max-w-[480px] bg-cream-50 rounded-t-3xl sm:rounded-2xl pointer-events-auto flex flex-col"
               style={{ maxHeight: '92dvh', boxShadow: '0px 0px 0px 1px #e8e6dc, 0 25px 50px -12px rgba(0,0,0,0.25)' }}
               initial={{ opacity: 0, y: 80 }}
@@ -215,7 +218,7 @@ export default function OrderModal({ isOpen, onClose, perfumeName, perfumeId, br
                 <div className="sticky top-0 bg-cream-50 z-10 flex justify-end px-6 pt-4 pb-1">
                   <button
                     onClick={handleClose}
-                    className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-cream-200 transition-colors"
+                    className="w-11 h-11 -mr-2 rounded-full flex items-center justify-center hover:bg-cream-200 transition-colors"
                     aria-label="Закрыть"
                   >
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -274,16 +277,16 @@ export default function OrderModal({ isOpen, onClose, perfumeName, perfumeId, br
                           />
                         </div>
                         <div>
-                          <label className="label text-ink-500 block mb-2">Ваше имя *</label>
-                          <input type="text" required value={name} onChange={(e) => setName(e.target.value)} placeholder="Как к вам обращаться" className="input-base" />
+                          <label htmlFor="order-name" className="label text-ink-500 block mb-2">Ваше имя *</label>
+                          <input id="order-name" type="text" required autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Как к вам обращаться" className="input-base" />
                         </div>
                         <div>
-                          <label className="label text-ink-500 block mb-2">Telegram или телефон *</label>
-                          <input type="text" required value={contact} onChange={(e) => setContact(e.target.value)} placeholder="@username или +7 900 000-00-00" className="input-base" />
+                          <label htmlFor="order-contact" className="label text-ink-500 block mb-2">Telegram или телефон *</label>
+                          <input id="order-contact" type="text" required autoComplete="tel" value={contact} onChange={(e) => setContact(e.target.value)} placeholder="@username или +7 900 000-00-00" className="input-base" />
                         </div>
 
                         {status === 'error' && (
-                          <div className="text-sm bg-cream-100 rounded-xl px-4 py-3" style={{ boxShadow: '0px 0px 0px 1px #e8e6dc' }}>
+                          <div role="alert" className="text-sm bg-cream-100 rounded-xl px-4 py-3" style={{ boxShadow: '0px 0px 0px 1px #e8e6dc' }}>
                             <p className="text-ink-500">{errorMsg}</p>
                             <a
                               href={TELEGRAM_DIRECT_URL}

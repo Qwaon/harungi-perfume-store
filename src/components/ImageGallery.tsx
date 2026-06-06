@@ -64,7 +64,7 @@ export default function ImageGallery({ images, name }: Props) {
           <>
             <button
               onClick={() => setActive((prev) => (prev - 1 + images.length) % images.length)}
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-cream-50/80 backdrop-blur-sm flex items-center justify-center hover:bg-cream-50 transition-colors"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-cream-50/80 backdrop-blur-sm flex items-center justify-center hover:bg-cream-50 transition-colors"
               aria-label="Предыдущее фото"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -73,7 +73,7 @@ export default function ImageGallery({ images, name }: Props) {
             </button>
             <button
               onClick={() => setActive((prev) => (prev + 1) % images.length)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-cream-50/80 backdrop-blur-sm flex items-center justify-center hover:bg-cream-50 transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-cream-50/80 backdrop-blur-sm flex items-center justify-center hover:bg-cream-50 transition-colors"
               aria-label="Следующее фото"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -83,18 +83,24 @@ export default function ImageGallery({ images, name }: Props) {
           </>
         )}
 
-        {/* Dot indicators */}
+        {/* Dot indicators — fixed-size dots; active state via opacity/scale only
+            (no width/height animation, per transform-performance guideline) */}
         {images.length > 1 && (
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex items-center">
             {images.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setActive(i)}
-                aria-label={`Фото ${i + 1}`}
-                className={`rounded-full bg-ink-900/70 transition-all duration-300 ${
-                  i === active ? 'w-4 h-1.5' : 'w-1.5 h-1.5 opacity-40'
-                }`}
-              />
+                aria-label={`Перейти к фото ${i + 1}`}
+                aria-current={i === active ? 'true' : undefined}
+                className="w-7 h-9 flex items-center justify-center"
+              >
+                <span
+                  className={`block w-1.5 h-1.5 rounded-full bg-ink-900 transition-[opacity,transform] duration-200 ease-out ${
+                    i === active ? 'opacity-90 scale-150' : 'opacity-40 scale-100'
+                  }`}
+                />
+              </button>
             ))}
           </div>
         )}

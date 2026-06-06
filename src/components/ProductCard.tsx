@@ -59,9 +59,9 @@ export default function ProductCard({ perfume, index = 0, onQuickAdd, priority =
 
         {/* Info + CTA */}
         <div>
-          <p className="label text-ink-300 group-hover:text-gold-500 transition-colors duration-300 mb-1">{perfume.brand}</p>
+          <p className="label text-ink-300 group-hover:text-gold-500 transition-colors duration-300 mb-1 break-words">{perfume.brand}</p>
           <Link href={`/product/${perfume.id}`}>
-            <h3 className="font-display text-lg font-light text-ink-900 hover:text-ink-500 transition-colors duration-200 leading-tight mb-2">
+            <h3 className="font-display text-lg font-light text-ink-900 hover:text-ink-500 transition-colors duration-200 leading-tight mb-2 break-words">
               {perfume.name}
             </h3>
           </Link>
@@ -71,7 +71,7 @@ export default function ProductCard({ perfume, index = 0, onQuickAdd, priority =
           {onQuickAdd ? (
             <button
               onClick={(e) => { e.preventDefault(); onQuickAdd(perfume); }}
-              className="w-full text-xs font-medium text-ink-900 bg-cream-100 hover:bg-ink-900 hover:text-white border border-cream-200 hover:border-ink-900 py-2 rounded-lg transition-all duration-150"
+              className="w-full min-h-11 text-xs font-medium text-ink-900 bg-cream-100 hover:bg-ink-900 hover:text-white border border-cream-200 hover:border-ink-900 py-2 rounded-lg transition-colors duration-150"
             >
               + В корзину
             </button>

@@ -33,7 +33,8 @@ function VolumeButton({
   return (
     <button
       onClick={onClick}
-      className={`px-5 py-3.5 rounded-xl text-left transition-all duration-200 focus:outline-none ${
+      aria-pressed={selected}
+      className={`px-5 py-3.5 rounded-xl text-left transition-all duration-200 ${
         selected
           ? 'bg-ink-900 text-white'
           : 'bg-cream-50 text-ink-700 hover:-translate-y-px'

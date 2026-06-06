@@ -1,13 +1,16 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { CartItem } from '@/types';
 import { lockScroll, unlockScroll } from '@/lib/scrollLock';
+
+const MAX_QUANTITY = 99;
 
 interface CartContextValue {
   items: CartItem[];
   addItem: (item: CartItem) => void;
   removeItem: (perfumeId: string, volume: string) => void;
+  updateQuantity: (perfumeId: string, volume: string, quantity: number) => void;
   clearCart: () => void;
   total: number;
   count: number;
@@ -18,19 +21,47 @@ interface CartContextValue {
 
 const CartContext = createContext<CartContextValue | null>(null);
 
+/** Validate and migrate items loaded from localStorage: drop malformed entries,
+ *  backfill `quantity` for carts saved before quantity support existed. */
+function sanitizeStoredItems(raw: unknown): CartItem[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((entry): CartItem[] => {
+    if (
+      !entry ||
+      typeof entry.perfumeId !== 'string' ||
+      typeof entry.volume !== 'string' ||
+      typeof entry.price !== 'number' ||
+      !Number.isFinite(entry.price)
+    ) {
+      return [];
+    }
+    const qty = Number(entry.quantity);
+    const quantity = Number.isFinite(qty) && qty >= 1 ? Math.min(Math.floor(qty), MAX_QUANTITY) : 1;
+    return [{ ...entry, quantity }];
+  });
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  // Skip the very first persist: on the initial commit `items` is still the
+  // empty default, and writing it would overwrite a returning user's saved cart
+  // before the load effect's state update has been applied.
+  const skipNextPersist = useRef(true);
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem('harungi-cart');
-      if (saved) setItems(JSON.parse(saved));
+      if (saved) setItems(sanitizeStoredItems(JSON.parse(saved)));
     } catch {}
     setIsOpen(false);
   }, []);
 
   useEffect(() => {
+    if (skipNextPersist.current) {
+      skipNextPersist.current = false;
+      return;
+    }
     localStorage.setItem('harungi-cart', JSON.stringify(items));
   }, [items]);
 
@@ -42,12 +73,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [isOpen]);
 
   const addItem = (item: CartItem) => {
+    const addQty = Number.isFinite(item.quantity) && item.quantity >= 1 ? Math.floor(item.quantity) : 1;
     setItems((prev) => {
-      const exists = prev.find(
+      const idx = prev.findIndex(
         (i) => i.perfumeId === item.perfumeId && i.volume === item.volume
       );
-      if (exists) return prev;
-      return [...prev, item];
+      if (idx === -1) {
+        return [...prev, { ...item, quantity: Math.min(addQty, MAX_QUANTITY) }];
+      }
+      const next = [...prev];
+      next[idx] = { ...next[idx], quantity: Math.min(next[idx].quantity + addQty, MAX_QUANTITY) };
+      return next;
     });
   };
 
@@ -57,9 +93,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  const updateQuantity = (perfumeId: string, volume: string, quantity: number) => {
+    setItems((prev) => {
+      if (quantity < 1) {
+        return prev.filter((i) => !(i.perfumeId === perfumeId && i.volume === volume));
+      }
+      const clamped = Math.min(Math.floor(quantity), MAX_QUANTITY);
+      return prev.map((i) =>
+        i.perfumeId === perfumeId && i.volume === volume ? { ...i, quantity: clamped } : i
+      );
+    });
+  };
+
   const clearCart = () => setItems([]);
-  const total = items.reduce((sum, i) => sum + i.price, 0);
-  const count = items.length;
+  const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const count = items.reduce((sum, i) => sum + i.quantity, 0);
 
   return (
     <CartContext.Provider
@@ -67,6 +115,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         items,
         addItem,
         removeItem,
+        updateQuantity,
         clearCart,
         total,
         count,

@@ -6,6 +6,7 @@ import { CartItem, CartOrderPayload } from '@/types';
 import { lockScroll, unlockScroll } from '@/lib/scrollLock';
 import { trackEvent } from '@/lib/analytics';
 import { TELEGRAM_URL } from '@/lib/constants';
+import { pluralizeRu, POSITION_FORMS } from '@/lib/plural';
 import {
   MIN_NAME_LENGTH,
   MAX_NAME_LENGTH,
@@ -39,8 +40,10 @@ function buildFallbackText(
 ): string {
   const lines = ['Хочу заказать (корзина):'];
   items.forEach((item) => {
+    const qtyPart = item.quantity > 1 ? ` ×${item.quantity}` : '';
+    const linePrice = (item.price * item.quantity).toLocaleString('ru-RU');
     lines.push(
-      `• ${item.brand} — ${item.perfumeName} ${item.volumeLabel} — ${item.price.toLocaleString('ru-RU')} ₽`
+      `• ${item.brand} — ${item.perfumeName} ${item.volumeLabel}${qtyPart} — ${linePrice} ₽`
     );
   });
   lines.push(
@@ -180,6 +183,9 @@ export default function CartCheckoutModal({
           />
           <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:p-4 pointer-events-none">
             <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Оформление заказа"
               className="w-full sm:max-w-[480px] bg-cream-50 rounded-t-3xl sm:rounded-2xl pointer-events-auto flex flex-col"
               style={{
                 maxHeight: '92dvh',
@@ -197,7 +203,7 @@ export default function CartCheckoutModal({
                 <div className="sticky top-0 bg-cream-50 z-10 flex justify-end px-6 pt-4 pb-1">
                   <button
                     onClick={handleClose}
-                    className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-cream-200 transition-colors"
+                    className="w-11 h-11 -mr-2 rounded-full flex items-center justify-center hover:bg-cream-200 transition-colors"
                     aria-label="Закрыть"
                   >
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -234,12 +240,7 @@ export default function CartCheckoutModal({
                     <>
                       <p className="label text-gold-500 mb-2">Оформить заказ</p>
                       <h3 className="font-display text-2xl font-light text-ink-900 mb-6">
-                        {items.length}{' '}
-                        {items.length === 1
-                          ? 'позиция'
-                          : items.length < 5
-                          ? 'позиции'
-                          : 'позиций'}
+                        {items.length} {pluralizeRu(items.length, POSITION_FORMS)}
                       </h3>
 
                       <div className="flex flex-col gap-2 mb-6">
@@ -253,10 +254,11 @@ export default function CartCheckoutModal({
                               <p className="text-sm text-ink-900">{item.perfumeName}</p>
                               <p className="text-xs text-ink-300">
                                 {item.brand} · {item.volumeLabel}
+                                {item.quantity > 1 && ` · ${item.quantity} шт`}
                               </p>
                             </div>
-                            <p className="font-display text-lg font-light text-ink-900 flex-shrink-0 ml-4">
-                              {item.price.toLocaleString('ru-RU')} ₽
+                            <p className="font-display text-lg font-light text-ink-900 flex-shrink-0 ml-4 tabular-nums">
+                              {(item.price * item.quantity).toLocaleString('ru-RU')} ₽
                             </p>
                           </div>
                         ))}
@@ -280,10 +282,12 @@ export default function CartCheckoutModal({
                           />
                         </div>
                         <div>
-                          <label className="label text-ink-500 block mb-2">Ваше имя *</label>
+                          <label htmlFor="cart-name" className="label text-ink-500 block mb-2">Ваше имя *</label>
                           <input
+                            id="cart-name"
                             type="text"
                             required
+                            autoComplete="name"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             placeholder="Как к вам обращаться"
@@ -291,12 +295,14 @@ export default function CartCheckoutModal({
                           />
                         </div>
                         <div>
-                          <label className="label text-ink-500 block mb-2">
+                          <label htmlFor="cart-contact" className="label text-ink-500 block mb-2">
                             Telegram или телефон *
                           </label>
                           <input
+                            id="cart-contact"
                             type="text"
                             required
+                            autoComplete="tel"
                             value={contact}
                             onChange={(e) => setContact(e.target.value)}
                             placeholder="@username или +7 900 000-00-00"
@@ -305,6 +311,7 @@ export default function CartCheckoutModal({
                         </div>
                         {status === 'error' && (
                           <div
+                            role="alert"
                             className="text-sm bg-cream-100 rounded-xl px-4 py-3"
                             style={{ boxShadow: '0px 0px 0px 1px #e8e6dc' }}
                           >
