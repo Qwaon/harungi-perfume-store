@@ -3,8 +3,12 @@
 import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { CartItem } from '@/types';
 import { lockScroll, unlockScroll } from '@/lib/scrollLock';
+import { storageGet, storageSet, isCloudStorage } from '@/lib/storage';
 
 const MAX_QUANTITY = 99;
+const CART_KEY = 'cart';
+const LEGACY_CART_KEY = 'harungi-cart';
+const CART_MIGRATED_FLAG = 'harungi-cart-migrated';
 
 interface CartContextValue {
   items: CartItem[];
@@ -50,10 +54,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const skipNextPersist = useRef(true);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('harungi-cart');
-      if (saved) setItems(sanitizeStoredItems(JSON.parse(saved)));
-    } catch {}
+    (async () => {
+      try {
+        // одноразовая миграция localStorage -> CloudStorage
+        if (isCloudStorage() && !localStorage.getItem(CART_MIGRATED_FLAG)) {
+          const legacy = localStorage.getItem(LEGACY_CART_KEY);
+          const current = await storageGet(CART_KEY);
+          if (legacy && !current) await storageSet(CART_KEY, legacy);
+          localStorage.setItem(CART_MIGRATED_FLAG, '1');
+        }
+        const saved = (await storageGet(CART_KEY)) ?? localStorage.getItem(LEGACY_CART_KEY);
+        if (saved) setItems(sanitizeStoredItems(JSON.parse(saved)));
+      } catch {}
+    })();
     setIsOpen(false);
   }, []);
 
@@ -62,7 +75,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       skipNextPersist.current = false;
       return;
     }
-    localStorage.setItem('harungi-cart', JSON.stringify(items));
+    storageSet(CART_KEY, JSON.stringify(items));
   }, [items]);
 
   useEffect(() => {
