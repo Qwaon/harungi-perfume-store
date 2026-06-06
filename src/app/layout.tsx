@@ -7,6 +7,8 @@ import CartDrawer from '@/components/CartDrawer';
 import BottomNav from '@/components/BottomNav';
 import PageTransition from '@/components/PageTransition';
 import MotionProvider from '@/components/MotionProvider';
+import TelegramProvider from '@/components/TelegramProvider';
+import { FavoritesProvider } from '@/contexts/FavoritesContext';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -48,7 +50,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ru">
       <body className="min-h-dvh flex flex-col">
         <MotionProvider>
+          <TelegramProvider>
           <CartProvider>
+          <FavoritesProvider>
             <a
               href="#main-content"
               className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:bg-ink-900 focus:text-cream-50 focus:px-4 focus:py-2 focus:rounded-full focus:text-sm"
@@ -62,7 +66,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </main>
             <Footer />
             <BottomNav />
+          </FavoritesProvider>
           </CartProvider>
+          </TelegramProvider>
         </MotionProvider>
       </body>
     </html>
