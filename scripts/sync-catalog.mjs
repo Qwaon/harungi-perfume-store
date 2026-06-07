@@ -77,6 +77,9 @@ async function fetchAllRecords() {
 }
 
 // --- Трансформация записи Airtable → объект каталога ---
+// ⚠️ Канонический источник трансформации — src/data/transform.ts (рантайм).
+// Здесь дублируется намеренно: .mjs-скрипт не импортирует TS без сборки.
+// При изменении схемы Airtable обновить ОБА места одинаково.
 function transformRecord(record) {
   const f = record.fields;
 
