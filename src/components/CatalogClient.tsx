@@ -7,11 +7,12 @@ import { lockScroll, unlockScroll } from '@/lib/scrollLock';
 import ProductCard from './ProductCard';
 import QuickAddSheet from './QuickAddSheet';
 import { Perfume, FilterState } from '@/types';
-import { brands, genders, scentTypes, formats } from '@/data/perfumes';
+import { genders, scentTypes, formats } from '@/data/perfumes';
 import { pluralizeRu, POSITION_FORMS } from '@/lib/plural';
 
 interface Props {
   perfumes: Perfume[];
+  brands: string[];
 }
 
 const EMPTY_FILTERS: FilterState = { brand: '', gender: '', scentType: '', format: '', season: '', intensity: '' };
@@ -41,7 +42,7 @@ function Chip({ label, active, onClick }: { label: string; active: boolean; onCl
   );
 }
 
-export default function CatalogClient({ perfumes }: Props) {
+export default function CatalogClient({ perfumes, brands }: Props) {
   const searchParams = useSearchParams();
   const initialFormat = searchParams.get('format') ?? '';
   const [filters, setFilters] = useState<FilterState>({ ...EMPTY_FILTERS, format: initialFormat });

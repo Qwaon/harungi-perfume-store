@@ -1,6 +1,8 @@
 import { Suspense } from 'react';
 import CatalogClient from '@/components/CatalogClient';
-import { perfumes } from '@/data/perfumes';
+import { getPerfumes, getBrands } from '@/data/catalog';
+
+export const revalidate = 60;
 
 export const metadata = {
   title: 'Каталог',
@@ -11,7 +13,8 @@ export const metadata = {
   },
 };
 
-export default function CatalogPage() {
+export default async function CatalogPage() {
+  const [perfumes, brands] = await Promise.all([getPerfumes(), getBrands()]);
   return (
     <div className="min-h-dvh pt-28 md:pt-36">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -21,7 +24,7 @@ export default function CatalogPage() {
         </div>
 
         <Suspense>
-          <CatalogClient perfumes={perfumes} />
+          <CatalogClient perfumes={perfumes} brands={brands} />
         </Suspense>
       </div>
     </div>
