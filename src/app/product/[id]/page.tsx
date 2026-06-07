@@ -1,8 +1,12 @@
 import { notFound } from 'next/navigation';
-import { perfumes } from '@/data/perfumes';
+import { getPerfumes } from '@/data/catalog';
 import ProductPageClient from '@/components/ProductPageClient';
 
+export const revalidate = 60;
+export const dynamicParams = true;
+
 export async function generateStaticParams() {
+  const perfumes = await getPerfumes();
   return perfumes.map((p) => ({ id: p.id }));
 }
 
@@ -12,6 +16,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props) {
   const { id } = await params;
+  const perfumes = await getPerfumes();
   const perfume = perfumes.find((p) => p.id === id);
   if (!perfume) return {};
   const minPrice = Math.min(...Object.values(perfume.prices));
@@ -28,6 +33,7 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function ProductPage({ params }: Props) {
   const { id } = await params;
+  const perfumes = await getPerfumes();
   const perfume = perfumes.find((p) => p.id === id);
   if (!perfume) notFound();
 
