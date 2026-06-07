@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CartItem, CartOrderPayload } from '@/types';
 import { lockScroll, unlockScroll } from '@/lib/scrollLock';
@@ -70,6 +70,8 @@ export default function CartCheckoutModal({
   const [status, setStatus] = useState<Status>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [openedAt, setOpenedAt] = useState<number | null>(null);
+  const [orderNumber, setOrderNumber] = useState<number | null>(null);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
   const { isTelegram, user } = useTelegram();
 
   // В Telegram имя — из профиля, контакт = @username, если он есть.
@@ -83,9 +85,12 @@ export default function CartCheckoutModal({
     lockScroll();
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && status !== 'loading') handleClose(); };
     document.addEventListener('keydown', onKey);
+    // Move focus into the dialog on open (keyboard/SR users land inside it).
+    const t = setTimeout(() => closeBtnRef.current?.focus(), 50);
     return () => {
       document.removeEventListener('keydown', onKey);
       unlockScroll();
+      clearTimeout(t);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, status]);
@@ -104,6 +109,7 @@ export default function CartCheckoutModal({
       setContact('');
       setWebsite('');
       setErrorMsg('');
+      setOrderNumber(null);
     }, 400);
   };
 
@@ -145,6 +151,8 @@ export default function CartCheckoutModal({
       pagePath: window.location.pathname,
       timestamp: new Date().toISOString(),
       messageType: 'cart-order',
+      type: 'cart',
+      tgUserId: user?.id != null ? String(user.id) : undefined,
     };
 
     setStatus('loading');
@@ -152,6 +160,7 @@ export default function CartCheckoutModal({
 
     try {
       let sent = false;
+      let receivedOrderNumber: number | null = null;
       if (ORDER_WEBHOOK_URL) {
         const res = await fetch(ORDER_WEBHOOK_URL, {
           method: 'POST',
@@ -159,6 +168,10 @@ export default function CartCheckoutModal({
           body: JSON.stringify(payload),
         });
         sent = res.ok;
+        if (res.ok) {
+          const data = await res.json().catch(() => ({}));
+          receivedOrderNumber = typeof data.orderNumber === 'number' ? data.orderNumber : null;
+        }
       }
 
       if (sent) {
@@ -171,6 +184,7 @@ export default function CartCheckoutModal({
             type: 'cart-order',
           });
         }
+        setOrderNumber(receivedOrderNumber);
         setStatus('success');
         onSuccess();
       } else {
@@ -184,6 +198,7 @@ export default function CartCheckoutModal({
             type: 'cart-order',
           });
         }
+        setOrderNumber(null);
         setStatus('success');
         onSuccess();
       }
@@ -225,6 +240,7 @@ export default function CartCheckoutModal({
               <div className="overflow-y-auto flex-1">
                 <div className="sticky top-0 bg-cream-50 z-10 flex justify-end px-6 pt-4 pb-1">
                   <button
+                    ref={closeBtnRef}
                     onClick={handleClose}
                     className="w-11 h-11 -mr-2 rounded-full flex items-center justify-center hover:bg-cream-200 transition-colors"
                     aria-label="Закрыть"
@@ -250,11 +266,21 @@ export default function CartCheckoutModal({
                         </svg>
                       </div>
                       <h3 className="font-display text-3xl font-light text-ink-900 mb-3">
-                        Заявка отправлена
+                        {orderNumber != null ? `Заявка №${orderNumber} принята` : 'Заявка отправлена'}
                       </h3>
-                      <p className="text-ink-500 text-sm leading-relaxed mb-8">
-                        Мы свяжемся с вами в ближайшее время через Telegram или по телефону.
-                      </p>
+                      <div className="text-ink-500 text-sm leading-relaxed mb-8 text-left bg-cream-100 rounded-xl px-4 py-3" style={{ boxShadow: '0px 0px 0px 1px #e8e6dc' }}>
+                        <p className="mb-2">Что дальше:</p>
+                        <p className="mb-1">1. Менеджер свяжется в Telegram или по телефону для подтверждения.</p>
+                        <p>2. Оплата — после подтверждения (перевод или при встрече).</p>
+                      </div>
+                      <a
+                        href={TELEGRAM_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-outline w-full mb-3 inline-flex items-center justify-center"
+                      >
+                        Написать менеджеру
+                      </a>
                       <button onClick={handleClose} className="btn-primary w-full">
                         Закрыть
                       </button>
@@ -273,9 +299,9 @@ export default function CartCheckoutModal({
                             className="bg-cream-100 rounded-xl px-4 py-3 flex justify-between items-center"
                             style={{ boxShadow: '0px 0px 0px 1px #e8e6dc' }}
                           >
-                            <div>
-                              <p className="text-sm text-ink-900">{item.perfumeName}</p>
-                              <p className="text-xs text-ink-300">
+                            <div className="min-w-0">
+                              <p className="text-sm text-ink-900 truncate">{item.perfumeName}</p>
+                              <p className="text-xs text-ink-300 truncate">
                                 {item.brand} · {item.volumeLabel}
                                 {item.quantity > 1 && ` · ${item.quantity} шт`}
                               </p>
