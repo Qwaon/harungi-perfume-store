@@ -1,20 +1,22 @@
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import CatalogClient from '@/components/CatalogClient';
-import { brandEntries, getPerfumesByBrandSlug } from '@/data/perfumes';
+import { getBrandEntries, getPerfumesByBrandSlug, getBrands } from '@/data/catalog';
+
+export const revalidate = 60;
+export const dynamicParams = true;
 
 interface Props {
   params: { brand: string };
 }
 
-export function generateStaticParams() {
-  return brandEntries.map((entry) => ({ brand: entry.slug }));
+export async function generateStaticParams() {
+  return (await getBrandEntries()).map((entry) => ({ brand: entry.slug }));
 }
 
-export function generateMetadata({ params }: Props) {
-  const entry = brandEntries.find((item) => item.slug === params.brand);
+export async function generateMetadata({ params }: Props) {
+  const entry = (await getBrandEntries()).find((item) => item.slug === params.brand);
   if (!entry) return {};
-
   return {
     title: `${entry.name}`,
     description: `Каталог ${entry.name} в HARUNGI: оригиналы и распивы от 2 мл.`,
@@ -25,12 +27,15 @@ export function generateMetadata({ params }: Props) {
   };
 }
 
-export default function BrandCatalogPage({ params }: Props) {
-  const entry = brandEntries.find((item) => item.slug === params.brand);
+export default async function BrandCatalogPage({ params }: Props) {
+  const entries = await getBrandEntries();
+  const entry = entries.find((item) => item.slug === params.brand);
   if (!entry) notFound();
 
-  const brandPerfumes = getPerfumesByBrandSlug(params.brand);
+  const brandPerfumes = await getPerfumesByBrandSlug(params.brand);
   if (brandPerfumes.length === 0) notFound();
+
+  const brands = await getBrands();
 
   return (
     <div className="min-h-dvh pt-28 md:pt-36">
@@ -44,7 +49,7 @@ export default function BrandCatalogPage({ params }: Props) {
         </div>
 
         <Suspense>
-          <CatalogClient perfumes={brandPerfumes} />
+          <CatalogClient perfumes={brandPerfumes} brands={brands} />
         </Suspense>
       </div>
     </div>
