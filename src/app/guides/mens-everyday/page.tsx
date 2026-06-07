@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import ProductCard from '@/components/ProductCard';
-import { perfumes } from '@/data/perfumes';
+import { getPerfumes } from '@/data/catalog';
+
+export const revalidate = 60;
 
 export const metadata = {
   title: 'Мужские ароматы на каждый день',
@@ -11,7 +13,8 @@ export const metadata = {
   },
 };
 
-export default function MensEverydayPage() {
+export default async function MensEverydayPage() {
+  const perfumes = await getPerfumes();
   const picks = perfumes
     .filter((item) => item.gender !== 'женский' && item.occasion.includes('офис'))
     .slice(0, 6);

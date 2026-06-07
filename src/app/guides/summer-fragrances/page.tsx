@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import ProductCard from '@/components/ProductCard';
-import { perfumes } from '@/data/perfumes';
+import { getPerfumes } from '@/data/catalog';
+
+export const revalidate = 60;
 
 export const metadata = {
   title: 'Лучшие ароматы на лето',
@@ -11,7 +13,8 @@ export const metadata = {
   },
 };
 
-export default function SummerFragrancesPage() {
+export default async function SummerFragrancesPage() {
+  const perfumes = await getPerfumes();
   const picks = perfumes.filter((item) => item.season.includes('лето') || item.scentType === 'свежий').slice(0, 6);
 
   return (
