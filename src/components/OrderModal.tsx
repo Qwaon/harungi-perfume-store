@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { OrderPayload, Volume } from '@/types';
 import { lockScroll, unlockScroll } from '@/lib/scrollLock';
@@ -51,9 +51,9 @@ function createFallbackMessage(payload: OrderPayload) {
   ].join('\n');
 }
 
-async function sendOrder(payload: OrderPayload): Promise<boolean> {
+async function sendOrder(payload: OrderPayload): Promise<{ ok: boolean; orderNumber: number | null }> {
   if (!ORDER_WEBHOOK_URL) {
-    return false;
+    return { ok: false, orderNumber: null };
   }
 
   const res = await fetch(ORDER_WEBHOOK_URL, {
@@ -64,7 +64,12 @@ async function sendOrder(payload: OrderPayload): Promise<boolean> {
     body: JSON.stringify(payload),
   });
 
-  return res.ok;
+  if (!res.ok) {
+    return { ok: false, orderNumber: null };
+  }
+
+  const data = await res.json().catch(() => ({}));
+  return { ok: true, orderNumber: typeof data.orderNumber === 'number' ? data.orderNumber : null };
 }
 
 export default function OrderModal({ isOpen, onClose, perfumeName, perfumeId, brand, volume, volumeLabel, price }: Props) {
@@ -74,6 +79,8 @@ export default function OrderModal({ isOpen, onClose, perfumeName, perfumeId, br
   const [status, setStatus] = useState<Status>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [openedAt, setOpenedAt] = useState<number | null>(null);
+  const [orderNumber, setOrderNumber] = useState<number | null>(null);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
   const { isTelegram, user } = useTelegram();
 
   // В Telegram имя берём из профиля; контакт = @username, если он есть.
@@ -87,9 +94,12 @@ export default function OrderModal({ isOpen, onClose, perfumeName, perfumeId, br
     lockScroll();
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && status !== 'loading') handleClose(); };
     document.addEventListener('keydown', onKey);
+    // Move focus into the dialog on open (keyboard/SR users land inside it).
+    const t = setTimeout(() => closeBtnRef.current?.focus(), 50);
     return () => {
       document.removeEventListener('keydown', onKey);
       unlockScroll();
+      clearTimeout(t);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, status]);
@@ -149,20 +159,23 @@ export default function OrderModal({ isOpen, onClose, perfumeName, perfumeId, br
       pagePath: window.location.pathname,
       timestamp: new Date().toISOString(),
       messageType: 'order',
+      type: 'single',
+      tgUserId: user?.id != null ? String(user.id) : undefined,
     };
 
     setStatus('loading');
     setErrorMsg('');
 
     try {
-      const sent = await sendOrder(payload);
+      const result = await sendOrder(payload);
 
-      if (sent) {
+      if (result.ok) {
         window.localStorage.setItem(LAST_SUBMIT_KEY, String(Date.now()));
         trackEvent('order_submit', { perfumeId, volume, price });
         if (isTelegram) {
           appendOrder({ items: [[perfumeId, volume, 1, price]], total: price, type: 'order' });
         }
+        setOrderNumber(result.orderNumber);
         setStatus('success');
       } else {
         trackEvent('order_fallback', { perfumeId, volume });
@@ -170,6 +183,7 @@ export default function OrderModal({ isOpen, onClose, perfumeName, perfumeId, br
           appendOrder({ items: [[perfumeId, volume, 1, price]], total: price, type: 'order' });
         }
         openFallback(payload);
+        setOrderNumber(null);
         setStatus('success');
       }
     } catch {
@@ -188,6 +202,7 @@ export default function OrderModal({ isOpen, onClose, perfumeName, perfumeId, br
       setWebsite('');
       setErrorMsg('');
       setOpenedAt(null);
+      setOrderNumber(null);
     }, 400);
   };
 
@@ -233,6 +248,7 @@ export default function OrderModal({ isOpen, onClose, perfumeName, perfumeId, br
                 {/* Close */}
                 <div className="sticky top-0 bg-cream-50 z-10 flex justify-end px-6 pt-4 pb-1">
                   <button
+                    ref={closeBtnRef}
                     onClick={handleClose}
                     className="w-11 h-11 -mr-2 rounded-full flex items-center justify-center hover:bg-cream-200 transition-colors"
                     aria-label="Закрыть"
@@ -255,17 +271,29 @@ export default function OrderModal({ isOpen, onClose, perfumeName, perfumeId, br
                           <path d="M5 12l5 5L20 7" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       </div>
-                      <h3 className="font-display text-3xl font-light text-ink-900 mb-3">Заявка отправлена</h3>
-                      <p className="text-ink-500 text-sm leading-relaxed mb-8">
-                        Мы свяжемся с вами в ближайшее время через Telegram или по телефону.
-                      </p>
+                      <h3 className="font-display text-3xl font-light text-ink-900 mb-3">
+                        {orderNumber != null ? `Заявка №${orderNumber} принята` : 'Заявка отправлена'}
+                      </h3>
+                      <div className="text-ink-500 text-sm leading-relaxed mb-8 text-left bg-cream-100 rounded-xl px-4 py-3" style={{ boxShadow: '0px 0px 0px 1px #e8e6dc' }}>
+                        <p className="mb-2">Что дальше:</p>
+                        <p className="mb-1">1. Менеджер свяжется в Telegram или по телефону для подтверждения.</p>
+                        <p>2. Оплата — после подтверждения (перевод или при встрече).</p>
+                      </div>
+                      <a
+                        href={TELEGRAM_DIRECT_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-outline w-full mb-3 inline-flex items-center justify-center"
+                      >
+                        Написать менеджеру
+                      </a>
                       <button onClick={handleClose} className="btn-primary w-full">Закрыть</button>
                     </motion.div>
                   ) : (
                     <>
                       <p className="label text-gold-500 mb-2">Оформить заявку</p>
-                      <h3 className="font-display text-2xl font-light text-ink-900 mb-1">{perfumeName}</h3>
-                      <p className="text-sm text-ink-300 mb-6">{brand}</p>
+                      <h3 className="font-display text-2xl font-light text-ink-900 mb-1 break-words">{perfumeName}</h3>
+                      <p className="text-sm text-ink-300 mb-6 break-words">{brand}</p>
 
                       <div className="bg-cream-100 rounded-xl p-4 mb-7 flex justify-between items-center"
                         style={{ boxShadow: '0px 0px 0px 1px #e8e6dc' }}
