@@ -67,6 +67,10 @@ export interface OrderPayload {
   pagePath: string;
   timestamp: string;
   messageType: 'order' | 'consultation';
+  // 'single' для обычного заказа, 'consultation' для консультации.
+  type: 'single' | 'consultation';
+  // Telegram user id (только при заказе из Mini App), для будущей привязки.
+  tgUserId?: string;
 }
 
 export interface CartOrderPayload {
@@ -79,6 +83,15 @@ export interface CartOrderPayload {
   pagePath: string;
   timestamp: string;
   messageType: 'cart-order';
+  type: 'cart';
+  tgUserId?: string;
+}
+
+// Ответ Worker'а на POST / — orderNumber может быть null, если Airtable недоступен.
+export interface OrderResponse {
+  ok: boolean;
+  orderNumber?: number | null;
+  error?: string;
 }
 
 export interface FilterState {
