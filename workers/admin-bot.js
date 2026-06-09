@@ -248,13 +248,30 @@ async function getSession(userId, env) {
   return s;
 }
 
-/** UPSERT сессии (мердж по tg_user_id). */
+/**
+ * Частичное обновление сессии. PATCH мерджит только переданные колонки —
+ * НЕ затирает draft/flow при сохранении одного step (в отличие от POST-upsert,
+ * который заменяет строку целиком). Если строки нет — создаёт через POST.
+ */
 async function saveSession(userId, patch, env) {
-  const body = { tg_user_id: userId, ...patch, updated_at: new Date().toISOString() };
+  const body = { ...patch, updated_at: new Date().toISOString() };
+  const patchRes = await fetch(
+    `${env.SUPABASE_URL}/rest/v1/admin_sessions?tg_user_id=eq.${userId}`,
+    {
+      method: 'PATCH',
+      headers: { ...sbHeaders(env), Prefer: 'return=representation' },
+      body: JSON.stringify(body),
+    }
+  );
+  if (patchRes.ok) {
+    const rows = await patchRes.json();
+    if (rows.length > 0) return;  // строка существовала, обновлена
+  }
+  // Строки не было — вставляем.
   await fetch(`${env.SUPABASE_URL}/rest/v1/admin_sessions`, {
     method: 'POST',
     headers: { ...sbHeaders(env), Prefer: 'resolution=merge-duplicates' },
-    body: JSON.stringify(body),
+    body: JSON.stringify({ tg_user_id: userId, ...body }),
   });
 }
 
