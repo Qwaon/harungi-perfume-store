@@ -230,3 +230,38 @@ async function deleteImages(paths, env) {
     body: JSON.stringify({ prefixes: paths }),
   }).catch(() => {});
 }
+
+// --- Сессии диалога (таблица admin_sessions) ---
+const SESSION_TTL_MS = 24 * 60 * 60 * 1000;  // 24ч — протухание
+
+/** Сессия админа или null. Протухшие (>24ч) считаются отсутствующими. */
+async function getSession(userId, env) {
+  const res = await fetch(
+    `${env.SUPABASE_URL}/rest/v1/admin_sessions?tg_user_id=eq.${userId}&select=*`,
+    { headers: sbHeaders(env) }
+  );
+  if (!res.ok) return null;
+  const rows = await res.json();
+  const s = rows[0];
+  if (!s) return null;
+  if (Date.now() - new Date(s.updated_at).getTime() > SESSION_TTL_MS) return null;
+  return s;
+}
+
+/** UPSERT сессии (мердж по tg_user_id). */
+async function saveSession(userId, patch, env) {
+  const body = { tg_user_id: userId, ...patch, updated_at: new Date().toISOString() };
+  await fetch(`${env.SUPABASE_URL}/rest/v1/admin_sessions`, {
+    method: 'POST',
+    headers: { ...sbHeaders(env), Prefer: 'resolution=merge-duplicates' },
+    body: JSON.stringify(body),
+  });
+}
+
+/** Сброс сессии (после сохранения/отмены). */
+async function clearSession(userId, env) {
+  await fetch(
+    `${env.SUPABASE_URL}/rest/v1/admin_sessions?tg_user_id=eq.${userId}`,
+    { method: 'DELETE', headers: sbHeaders(env) }
+  ).catch(() => {});
+}
