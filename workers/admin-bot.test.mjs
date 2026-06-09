@@ -1,6 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { slugify, makeUniqueId, validateField, draftToPerfumeRow } from './admin-bot.js';
+import {
+  slugify, makeUniqueId, validateField, draftToPerfumeRow,
+  ADD_STEPS, nextAddStep, advanceAdd,
+} from './admin-bot.js';
 
 test('slugify: латиница → kebab-case', () => {
   assert.equal(slugify('Tom Ford', 'Black Orchid'), 'tom-ford-black-orchid');
@@ -70,4 +73,41 @@ test('draftToPerfumeRow: пропущенные поля → null/false', () => 
   assert.equal(row.images, null);
   assert.equal(row.inStock, false);
   assert.equal(row.featured, false);
+});
+
+test('ADD_STEPS: порядок шагов начинается с name', () => {
+  assert.equal(ADD_STEPS[0], 'name');
+  assert.ok(ADD_STEPS.includes('photos'));
+  assert.equal(ADD_STEPS[ADD_STEPS.length - 1], 'confirm');
+});
+
+test('nextAddStep: после name идёт brand', () => {
+  assert.equal(nextAddStep('name', {}), 'brand');
+});
+
+test('nextAddStep: price_20ml всегда ведёт к price_original (его спрашиваем с Пропустить)', () => {
+  assert.equal(nextAddStep('price_20ml', {}), 'price_original');
+});
+
+test('nextAddStep: original_volume_ml пропускается без price_original', () => {
+  // после price_original, если цены оригинала нет в draft — пропускаем объём оригинала
+  assert.equal(nextAddStep('price_original', { /* нет price_original */ }), 'notes_top');
+});
+
+test('nextAddStep: original_volume_ml включается при наличии price_original', () => {
+  assert.equal(nextAddStep('price_original', { price_original: 14500 }), 'original_volume_ml');
+});
+
+test('advanceAdd: валидный ввод name → draft patched, переход к brand', () => {
+  const res = advanceAdd('name', 'Sauvage', {});
+  assert.equal(res.ok, true);
+  assert.deepEqual(res.draftPatch, { name: 'Sauvage' });
+  assert.equal(res.nextStep, 'brand');
+});
+
+test('advanceAdd: невалидная цена → ошибка, шаг не меняется', () => {
+  const res = advanceAdd('price_5ml', 'abc', { name: 'X', brand: 'B' });
+  assert.equal(res.ok, false);
+  assert.equal(res.nextStep, 'price_5ml');
+  assert.match(res.error, /число/);
 });

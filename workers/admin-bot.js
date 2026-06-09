@@ -102,3 +102,37 @@ export function draftToPerfumeRow(draft) {
     bestseller: Boolean(draft.bestseller),
   };
 }
+
+// --- FSM потока «Добавить» ---
+// Порядок шагов. confirm — финальный (превью + Сохранить).
+export const ADD_STEPS = [
+  'name', 'brand', 'description', 'gender', 'scentType', 'format',
+  'price_5ml', 'price_10ml', 'price_15ml', 'price_20ml', 'price_original',
+  'original_volume_ml', 'notes_top', 'notes_middle', 'notes_base',
+  'photos', 'flags', 'confirm',
+];
+
+/** Следующий шаг после current, с учётом условных пропусков. */
+export function nextAddStep(current, draft) {
+  const idx = ADD_STEPS.indexOf(current);
+  let next = ADD_STEPS[idx + 1];
+  // original_volume_ml спрашиваем только если есть price_original.
+  if (next === 'original_volume_ml' && draft.price_original == null) {
+    next = ADD_STEPS[idx + 2];
+  }
+  return next;
+}
+
+/**
+ * Обработать ввод на шаге add. → { ok, draftPatch, nextStep, error }.
+ * При невалидном вводе остаёмся на том же шаге (nextStep === current).
+ */
+export function advanceAdd(step, raw, draft) {
+  const v = validateField(step, raw);
+  if (!v.ok) {
+    return { ok: false, error: v.error, nextStep: step, draftPatch: {} };
+  }
+  const draftPatch = { [step]: v.value };
+  const merged = { ...draft, ...draftPatch };
+  return { ok: true, draftPatch, nextStep: nextAddStep(step, merged) };
+}
