@@ -1,0 +1,16 @@
+# Wrangler-конфиг для админ-бота каталога.
+# Деплой:  wrangler deploy -c workers/wrangler.admin-bot.toml
+# Секреты задаются отдельно (НЕ в этом файле — он в гите):
+#   wrangler secret put ADMIN_BOT_TOKEN      -c workers/wrangler.admin-bot.toml
+#   wrangler secret put SUPABASE_SERVICE_KEY -c workers/wrangler.admin-bot.toml
+#   wrangler secret put ADMIN_WEBHOOK_SECRET -c workers/wrangler.admin-bot.toml
+
+name = "admin-bot"
+main = "admin-bot.js"
+compatibility_date = "2024-09-01"
+
+# Не-секретные переменные. Секреты (токен бота, service_role, webhook-секрет)
+# задаются через `wrangler secret put` и здесь НЕ хранятся.
+[vars]
+SUPABASE_URL = "https://pdzjfymqgheasgqihpob.supabase.co"
+ADMIN_USER_IDS = "1410709676"
