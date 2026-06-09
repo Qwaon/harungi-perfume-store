@@ -152,3 +152,81 @@ export function parseAllowlist(csv) {
 export function isAllowed(userId, allowlistCsv) {
   return parseAllowlist(allowlistCsv).has(Number(userId));
 }
+
+// --- Supabase REST/Storage слой (service_role) ---
+function sbHeaders(env) {
+  return {
+    apikey: env.SUPABASE_SERVICE_KEY,
+    Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+    'Content-Type': 'application/json',
+  };
+}
+
+/** Все ароматы (id для проверки коллизий + список/превью). */
+async function selectPerfumes(env) {
+  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/perfumes?select=*`, {
+    headers: sbHeaders(env),
+  });
+  if (!res.ok) throw new Error(`Supabase select ${res.status}`);
+  return res.json();
+}
+
+/** UPSERT строки аромата. */
+async function upsertPerfume(row, env) {
+  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/perfumes`, {
+    method: 'POST',
+    headers: { ...sbHeaders(env), Prefer: 'resolution=merge-duplicates,return=representation' },
+    body: JSON.stringify(row),
+  });
+  if (!res.ok) throw new Error(`Supabase upsert ${res.status}: ${await res.text()}`);
+  return res.json();
+}
+
+/** PATCH одного поля (поток edit). */
+async function patchPerfume(id, field, value, env) {
+  const res = await fetch(
+    `${env.SUPABASE_URL}/rest/v1/perfumes?id=eq.${encodeURIComponent(id)}`,
+    { method: 'PATCH', headers: sbHeaders(env), body: JSON.stringify({ [field]: value }) }
+  );
+  if (!res.ok) throw new Error(`Supabase patch ${res.status}`);
+  return true;
+}
+
+/** DELETE аромата. */
+async function deletePerfume(id, env) {
+  const res = await fetch(
+    `${env.SUPABASE_URL}/rest/v1/perfumes?id=eq.${encodeURIComponent(id)}`,
+    { method: 'DELETE', headers: sbHeaders(env) }
+  );
+  if (!res.ok) throw new Error(`Supabase delete ${res.status}`);
+  return true;
+}
+
+/** Загрузка бинарника фото в Storage. → публичный URL. */
+async function uploadImage(bytes, contentType, path, env) {
+  const res = await fetch(
+    `${env.SUPABASE_URL}/storage/v1/object/perfume-images/${path}`,
+    {
+      method: 'POST',
+      headers: {
+        apikey: env.SUPABASE_SERVICE_KEY,
+        Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+        'Content-Type': contentType || 'image/jpeg',
+        'x-upsert': 'true',
+      },
+      body: bytes,
+    }
+  );
+  if (!res.ok) throw new Error(`Storage upload ${res.status}: ${await res.text()}`);
+  return `${env.SUPABASE_URL}/storage/v1/object/public/perfume-images/${path}`;
+}
+
+/** Удалить файлы фото аромата по списку путей/префиксов. Best-effort. */
+async function deleteImages(paths, env) {
+  if (!paths.length) return;
+  await fetch(`${env.SUPABASE_URL}/storage/v1/object/perfume-images`, {
+    method: 'DELETE',
+    headers: sbHeaders(env),
+    body: JSON.stringify({ prefixes: paths }),
+  }).catch(() => {});
+}
