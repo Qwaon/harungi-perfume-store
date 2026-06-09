@@ -34,3 +34,37 @@ export function makeUniqueId(base, existing) {
   while (existing.has(`${base}-${n}`)) n++;
   return `${base}-${n}`;
 }
+
+// --- Допустимые значения single-select (из src/types/index.ts) ---
+export const ENUMS = {
+  gender: ['мужской', 'женский', 'унисекс'],
+  scentType: ['цветочный', 'восточный', 'древесный', 'свежий', 'фужерный', 'шипровый', 'гурманский'],
+  format: ['оригинал', 'распив'],
+};
+
+const PRICE_STEPS = ['price_5ml', 'price_10ml', 'price_15ml', 'price_20ml', 'price_original', 'original_volume_ml'];
+const REQUIRED_TEXT = ['name', 'brand'];
+
+/** Валидация значения по шагу. → {ok:true,value} | {ok:false,error}. */
+export function validateField(step, raw) {
+  const value = typeof raw === 'string' ? raw.trim() : raw;
+
+  if (REQUIRED_TEXT.includes(step)) {
+    if (!value) return { ok: false, error: 'Поле не может быть пустым' };
+    return { ok: true, value };
+  }
+
+  if (PRICE_STEPS.includes(step)) {
+    const num = Number(value);
+    if (!Number.isFinite(num) || num < 0) return { ok: false, error: 'Введите число' };
+    return { ok: true, value: num };
+  }
+
+  if (ENUMS[step]) {
+    if (!ENUMS[step].includes(value)) return { ok: false, error: 'Выберите вариант кнопкой' };
+    return { ok: true, value };
+  }
+
+  // description, notes_* — свободный текст, всегда ok
+  return { ok: true, value };
+}
