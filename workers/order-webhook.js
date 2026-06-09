@@ -17,6 +17,57 @@ export function parseStatusCallback(data) {
   return { id, status };
 }
 
+/**
+ * payload (single/cart/consultation) → { order, items }.
+ * order — строка для таблицы orders; items — массив строк order_items (снимок).
+ */
+export function buildOrderRows(payload) {
+  const isCart = Array.isArray(payload.items);
+  const tgUserId = payload.tgUserId != null && payload.tgUserId !== ''
+    ? Number(payload.tgUserId) : null;
+
+  let items;
+  let total;
+  let type;
+
+  if (isCart) {
+    items = payload.items.map((i) => ({
+      perfume_id: i.perfumeId,
+      perfume_name: i.perfumeName,
+      brand: i.brand,
+      volume: i.volumeLabel || i.volume,
+      quantity: i.quantity || 1,
+      price: Number(i.price),
+    }));
+    total = Number(payload.total);
+    type = 'cart';
+  } else {
+    items = [{
+      perfume_id: payload.perfumeId,
+      perfume_name: payload.perfumeName,
+      brand: payload.brand,
+      volume: payload.volumeLabel || payload.volume,
+      quantity: 1,
+      price: Number(payload.price),
+    }];
+    total = Number(payload.price);
+    type = payload.type || (payload.messageType === 'consultation' ? 'consultation' : 'single');
+  }
+
+  const order = {
+    status: 'new',
+    customer_name: String(payload.name),
+    contact: String(payload.contact),
+    total,
+    type,
+    source: String(payload.source || ''),
+    page_url: String(payload.pageUrl || ''),
+    tg_user_id: tgUserId,
+  };
+
+  return { order, items };
+}
+
 export default {
   async fetch(request, env) {
     const allowedOrigin = env.ALLOWED_ORIGIN || '*';
