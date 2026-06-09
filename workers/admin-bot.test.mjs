@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   slugify, makeUniqueId, validateField, draftToPerfumeRow,
   ADD_STEPS, nextAddStep, advanceAdd,
+  isAllowed, parseAllowlist,
 } from './admin-bot.js';
 
 test('slugify: латиница → kebab-case', () => {
@@ -110,4 +111,26 @@ test('advanceAdd: невалидная цена → ошибка, шаг не м
   assert.equal(res.ok, false);
   assert.equal(res.nextStep, 'price_5ml');
   assert.match(res.error, /число/);
+});
+
+test('parseAllowlist: CSV → Set чисел', () => {
+  const set = parseAllowlist('111, 222 ,333');
+  assert.ok(set.has(111) && set.has(222) && set.has(333));
+});
+
+test('parseAllowlist: пусто → пустой Set', () => {
+  assert.equal(parseAllowlist('').size, 0);
+  assert.equal(parseAllowlist(undefined).size, 0);
+});
+
+test('isAllowed: id в списке → true', () => {
+  assert.equal(isAllowed(222, '111,222'), true);
+});
+
+test('isAllowed: id не в списке → false', () => {
+  assert.equal(isAllowed(999, '111,222'), false);
+});
+
+test('isAllowed: пустой allowlist → false (fail-closed)', () => {
+  assert.equal(isAllowed(111, ''), false);
 });

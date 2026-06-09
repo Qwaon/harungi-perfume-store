@@ -136,3 +136,19 @@ export function advanceAdd(step, raw, draft) {
   const merged = { ...draft, ...draftPatch };
   return { ok: true, draftPatch, nextStep: nextAddStep(step, merged) };
 }
+
+/** CSV из env → Set<number>. */
+export function parseAllowlist(csv) {
+  const set = new Set();
+  if (!csv) return set;
+  for (const part of String(csv).split(',')) {
+    const n = Number(part.trim());
+    if (Number.isFinite(n) && n > 0) set.add(n);
+  }
+  return set;
+}
+
+/** Допущен ли user id. Пустой allowlist → false (fail-closed). */
+export function isAllowed(userId, allowlistCsv) {
+  return parseAllowlist(allowlistCsv).has(Number(userId));
+}
