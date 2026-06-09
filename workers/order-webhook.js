@@ -169,6 +169,30 @@ async function patchSupabaseStatus(id, status, env) {
   }
 }
 
+/** Заказы пользователя с позициями (вложенно через PostgREST embed). */
+async function selectOrdersByUser(tgUserId, env) {
+  const url = `${env.SUPABASE_URL}/rest/v1/orders` +
+    `?tg_user_id=eq.${tgUserId}&select=*,order_items(*)&order=created_at.desc`;
+  const res = await fetch(url, { headers: sbHeaders(env) });
+  if (!res.ok) throw new Error(`Supabase history ${res.status}`);
+  return res.json();
+}
+
+/** POST /history: { initData } → заказы пользователя. */
+async function handleHistory(request, env, allowedOrigin) {
+  try {
+    const body = await request.json();
+    const verified = await verifyInitData(body.initData || '', env.TELEGRAM_BOT_TOKEN);
+    if (!verified.ok) {
+      return json({ ok: false, error: 'unauthorized' }, 401, allowedOrigin);
+    }
+    const orders = await selectOrdersByUser(verified.userId, env);
+    return json({ ok: true, orders }, 200, allowedOrigin);
+  } catch (e) {
+    return json({ ok: false, error: e instanceof Error ? e.message : 'error' }, 500, allowedOrigin);
+  }
+}
+
 export default {
   async fetch(request, env) {
     const allowedOrigin = env.ALLOWED_ORIGIN || '*';
@@ -181,6 +205,11 @@ export default {
     // Telegram callback (смена статуса по кнопке).
     if (url.pathname === '/tg' && request.method === 'POST') {
       return handleTelegramCallback(request, env);
+    }
+
+    // История заказов Mini App (проверка initData).
+    if (url.pathname === '/history' && request.method === 'POST') {
+      return handleHistory(request, env, allowedOrigin);
     }
 
     if (request.method !== 'POST') {
