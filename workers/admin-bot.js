@@ -68,3 +68,37 @@ export function validateField(step, raw) {
   // description, notes_* — свободный текст, всегда ok
   return { ok: true, value };
 }
+
+function csvOrNull(arr) {
+  return Array.isArray(arr) && arr.length ? arr.join(', ') : null;
+}
+function numOrNull(v) {
+  return v == null || v === '' ? null : Number(v);
+}
+
+/** draft → строка для INSERT/UPSERT в таблицу perfumes (плоские колонки). */
+export function draftToPerfumeRow(draft) {
+  return {
+    id: draft.id,
+    name: draft.name,
+    brand: draft.brand,
+    description: draft.description || null,
+    notes_top: csvOrNull(draft.notes_top),
+    notes_middle: csvOrNull(draft.notes_middle),
+    notes_base: csvOrNull(draft.notes_base),
+    gender: draft.gender || null,
+    scentType: draft.scentType || null,
+    format: draft.format || null,
+    images: csvOrNull(draft.images),
+    price_5ml: numOrNull(draft.price_5ml),
+    price_10ml: numOrNull(draft.price_10ml),
+    price_15ml: numOrNull(draft.price_15ml),
+    price_20ml: numOrNull(draft.price_20ml),
+    price_original: numOrNull(draft.price_original),
+    original_volume_ml: numOrNull(draft.original_volume_ml),
+    inStock: Boolean(draft.inStock),
+    featured: Boolean(draft.featured),
+    newArrival: Boolean(draft.newArrival),
+    bestseller: Boolean(draft.bestseller),
+  };
+}

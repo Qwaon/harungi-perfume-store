@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { slugify, makeUniqueId, validateField } from './admin-bot.js';
+import { slugify, makeUniqueId, validateField, draftToPerfumeRow } from './admin-bot.js';
 
 test('slugify: латиница → kebab-case', () => {
   assert.equal(slugify('Tom Ford', 'Black Orchid'), 'tom-ford-black-orchid');
@@ -45,4 +45,29 @@ test('validateField: gender вне допустимых → ошибка', () =>
 
 test('validateField: gender валиден', () => {
   assert.deepEqual(validateField('gender', 'мужской'), { ok: true, value: 'мужской' });
+});
+
+test('draftToPerfumeRow: полный draft → строка Supabase', () => {
+  const draft = {
+    id: 'dior-sauvage', name: 'Sauvage', brand: 'Christian Dior',
+    description: 'свежий', gender: 'мужской', scentType: 'свежий', format: 'оригинал',
+    price_5ml: 650, price_original: 14500, original_volume_ml: 100,
+    notes_top: ['бергамот', 'перец'], images: ['https://x/a.jpg', 'https://x/b.jpg'],
+    inStock: true, featured: true, newArrival: false, bestseller: true,
+  };
+  const row = draftToPerfumeRow(draft);
+  assert.equal(row.id, 'dior-sauvage');
+  assert.equal(row.notes_top, 'бергамот, перец');     // массив → CSV
+  assert.equal(row.images, 'https://x/a.jpg, https://x/b.jpg');
+  assert.equal(row.price_5ml, 650);
+  assert.equal(row.inStock, true);
+});
+
+test('draftToPerfumeRow: пропущенные поля → null/false', () => {
+  const row = draftToPerfumeRow({ id: 'x', name: 'X', brand: 'B' });
+  assert.equal(row.price_5ml, null);
+  assert.equal(row.notes_top, null);
+  assert.equal(row.images, null);
+  assert.equal(row.inStock, false);
+  assert.equal(row.featured, false);
 });
