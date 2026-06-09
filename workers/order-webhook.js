@@ -7,6 +7,16 @@ const STATUS_LABELS = {
   canceled: '✖️ Отмена',
 };
 
+/** Разбор callback_data "s:<id>:<status>". → {id,status} | null. */
+export function parseStatusCallback(data) {
+  if (typeof data !== 'string' || !data.startsWith('s:')) return null;
+  const parts = data.split(':');
+  const id = parts[1];
+  const status = parts[2];
+  if (!id || !STATUS_LABELS[status]) return null;
+  return { id, status };
+}
+
 export default {
   async fetch(request, env) {
     const allowedOrigin = env.ALLOWED_ORIGIN || '*';
@@ -215,16 +225,14 @@ async function handleTelegramCallback(request, env) {
     return new Response('ok'); // не наш апдейт — игнорируем
   }
 
-  // callback_data = "s:<recordId>:<status>"
-  const parts = cq.data.split(':');
-  const recordId = parts[1];
-  const status = parts[2];
-  const label = STATUS_LABELS[status];
-
-  if (!recordId || !label) {
+  const parsed = parseStatusCallback(cq.data);
+  if (!parsed) {
     await answerCallback(cq.id, 'Неизвестный статус', env);
     return new Response('ok');
   }
+  const recordId = parsed.id;
+  const status = parsed.status;
+  const label = STATUS_LABELS[status];
 
   const patched = await patchAirtableStatus(recordId, status, env);
 
