@@ -1,57 +1,44 @@
 // src/lib/orderHistory.ts
 'use client';
 
-import { Volume } from '@/types';
-import { storageGet, storageSet } from '@/lib/storage';
+export interface OrderItem {
+  perfume_id: string | null;
+  perfume_name: string;
+  brand: string;
+  volume: string;
+  quantity: number;
+  price: number;
+}
 
-const ORDERS_KEY = 'orders';
-const MAX_ORDERS = 50;
-
-/** Позиция: [perfumeId, volume, quantity, unitPrice] — компактно под лимит 4 КБ. */
-export type StoredOrderItem = [string, Volume, number, number];
-
-export interface StoredOrder {
-  id: string;
-  ts: string; // ISO дата
-  items: StoredOrderItem[];
+export interface Order {
+  id: number;
+  order_number: number;
+  status: string;
   total: number;
-  type: 'order' | 'cart-order';
+  type: string;
+  created_at: string;
+  order_items: OrderItem[];
 }
 
-function isStoredOrder(x: unknown): x is StoredOrder {
-  return (
-    !!x &&
-    typeof (x as StoredOrder).id === 'string' &&
-    typeof (x as StoredOrder).ts === 'string' &&
-    Array.isArray((x as StoredOrder).items) &&
-    typeof (x as StoredOrder).total === 'number'
-  );
-}
+const WEBHOOK_URL = process.env.NEXT_PUBLIC_ORDER_WEBHOOK_URL;
 
-export async function readOrders(): Promise<StoredOrder[]> {
+/**
+ * История заказов из Supabase через Worker. initData — подписанная строка
+ * Telegram (window.Telegram.WebApp.initData), Worker проверит подпись.
+ * Никогда не бросает: при сбое возвращает [].
+ */
+export async function readOrders(initData: string): Promise<Order[]> {
+  if (!WEBHOOK_URL || !initData) return [];
   try {
-    const raw = await storageGet(ORDERS_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isStoredOrder);
+    const res = await fetch(`${WEBHOOK_URL}/history`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ initData }),
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data.orders) ? data.orders : [];
   } catch {
     return [];
-  }
-}
-
-/** Добавляет заказ в начало истории, обрезает до MAX_ORDERS. Никогда не бросает. */
-export async function appendOrder(order: Omit<StoredOrder, 'id' | 'ts'>): Promise<void> {
-  try {
-    const existing = await readOrders();
-    const entry: StoredOrder = {
-      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      ts: new Date().toISOString(),
-      ...order,
-    };
-    const next = [entry, ...existing].slice(0, MAX_ORDERS);
-    await storageSet(ORDERS_KEY, JSON.stringify(next));
-  } catch {
-    // история не критична — оформление заказа уже прошло
   }
 }
