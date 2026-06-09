@@ -68,6 +68,51 @@ export function buildOrderRows(payload) {
   return { order, items };
 }
 
+const INITDATA_TTL_SEC = 24 * 60 * 60;  // 24ч — защита от реиграния
+
+async function hmacSha256(keyBytes, msgStr) {
+  const key = await crypto.subtle.importKey('raw', keyBytes,
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  return new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(msgStr)));
+}
+
+/**
+ * Проверка подписи Telegram Web App initData.
+ * → { ok:true, userId } при валидной свежей подписи, иначе { ok:false }.
+ */
+export async function verifyInitData(initData, botToken) {
+  try {
+    const params = new URLSearchParams(initData);
+    const hash = params.get('hash');
+    if (!hash) return { ok: false };
+
+    // data_check_string: все пары кроме hash, key=value, отсортированы, через \n.
+    const pairs = [];
+    for (const [k, v] of params.entries()) {
+      if (k !== 'hash') pairs.push(`${k}=${v}`);
+    }
+    pairs.sort();
+    const dcs = pairs.join('\n');
+
+    const enc = new TextEncoder();
+    const secret = await hmacSha256(enc.encode('WebAppData'), botToken);
+    const sig = await hmacSha256(secret, dcs);
+    const sigHex = [...sig].map((b) => b.toString(16).padStart(2, '0')).join('');
+    if (sigHex !== hash) return { ok: false };
+
+    // Свежесть.
+    const authDate = Number(params.get('auth_date'));
+    if (!Number.isFinite(authDate)) return { ok: false };
+    if (Math.floor(Date.now() / 1000) - authDate > INITDATA_TTL_SEC) return { ok: false };
+
+    const user = JSON.parse(params.get('user') || '{}');
+    if (!user.id) return { ok: false };
+    return { ok: true, userId: Number(user.id) };
+  } catch {
+    return { ok: false };
+  }
+}
+
 export default {
   async fetch(request, env) {
     const allowedOrigin = env.ALLOWED_ORIGIN || '*';

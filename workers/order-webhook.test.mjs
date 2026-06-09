@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseStatusCallback, buildOrderRows } from './order-webhook.js';
+import { parseStatusCallback, buildOrderRows, verifyInitData } from './order-webhook.js';
 
 test('parseStatusCallback: валидный s:42:accepted', () => {
   assert.deepEqual(parseStatusCallback('s:42:accepted'), { id: '42', status: 'accepted' });
@@ -63,4 +63,55 @@ test('buildOrderRows: консультация → type consultation', () => {
   };
   const { order } = buildOrderRows(payload);
   assert.equal(order.type, 'consultation');
+});
+
+// Хелпер: собрать валидный initData с правильным hash (схема Telegram Web App).
+async function makeInitData(botToken, userId, authDate) {
+  const params = new URLSearchParams();
+  params.set('auth_date', String(authDate));
+  params.set('user', JSON.stringify({ id: userId, first_name: 'Test' }));
+  const pairs = [...params.entries()].map(([k, v]) => `${k}=${v}`).sort();
+  const dcs = pairs.join('\n');
+  const enc = new TextEncoder();
+  const secretKey = await crypto.subtle.importKey('raw', enc.encode('WebAppData'),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const secret = await crypto.subtle.sign('HMAC', secretKey, enc.encode(botToken));
+  const hk = await crypto.subtle.importKey('raw', secret,
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', hk, enc.encode(dcs));
+  const hashHex = [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  params.set('hash', hashHex);
+  return params.toString();
+}
+
+const BOT = '123456:TESTTOKEN';
+
+test('verifyInitData: валидная подпись → ok + userId', async () => {
+  const now = Math.floor(Date.now() / 1000);
+  const initData = await makeInitData(BOT, 777, now);
+  const res = await verifyInitData(initData, BOT);
+  assert.equal(res.ok, true);
+  assert.equal(res.userId, 777);
+});
+
+test('verifyInitData: искажённый hash → fail', async () => {
+  const now = Math.floor(Date.now() / 1000);
+  let initData = await makeInitData(BOT, 777, now);
+  initData = initData.replace(/hash=[a-f0-9]+/, 'hash=deadbeef');
+  const res = await verifyInitData(initData, BOT);
+  assert.equal(res.ok, false);
+});
+
+test('verifyInitData: чужой токен → fail', async () => {
+  const now = Math.floor(Date.now() / 1000);
+  const initData = await makeInitData(BOT, 777, now);
+  const res = await verifyInitData(initData, 'другой:токен');
+  assert.equal(res.ok, false);
+});
+
+test('verifyInitData: протухший auth_date → fail', async () => {
+  const old = Math.floor(Date.now() / 1000) - 25 * 60 * 60;  // 25ч назад
+  const initData = await makeInitData(BOT, 777, old);
+  const res = await verifyInitData(initData, BOT);
+  assert.equal(res.ok, false);
 });
