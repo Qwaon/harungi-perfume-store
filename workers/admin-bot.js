@@ -314,6 +314,274 @@ function skipKeyboard() {
   return { inline_keyboard: [[{ text: '⏭ Пропустить', callback_data: 'skip' }]] };
 }
 
+// --- Диспетчер апдейтов ---
+async function handleUpdate(update, env) {
+  const msg = update.message;
+  const cq = update.callback_query;
+  const userId = (msg && msg.from.id) || (cq && cq.from.id);
+
+  const session = await getSession(userId, env);
+
+  // Idempotency: дубль апдейта от Telegram — игнорируем.
+  if (session && update.update_id && session.last_update_id === update.update_id) return;
+  // Запоминаем обработанный update_id (если уже есть сессия).
+  if (session && update.update_id) {
+    await saveSession(userId, { last_update_id: update.update_id }, env);
+  }
+
+  // Команды.
+  if (msg && msg.text === '/start') return showMenu(userId, env);
+  if (msg && msg.text === '/cancel') {
+    await clearSession(userId, env);
+    return sendMessage(userId, 'Отменено.', env, { reply_markup: mainMenuKeyboard() });
+  }
+
+  // Нажатия кнопок.
+  if (cq) {
+    await tg('answerCallbackQuery', { callback_query_id: cq.id }, env);
+    return handleCallback(cq, userId, session, env);
+  }
+
+  // Текст/фото в рамках активного диалога.
+  if (msg) return handleMessage(msg, userId, session, env);
+}
+
+async function showMenu(userId, env) {
+  return sendMessage(userId, 'Каталог HARUNGI. Что делаем?', env, { reply_markup: mainMenuKeyboard() });
+}
+
+async function handleCallback(cq, userId, session, env) {
+  const data = cq.data || '';
+
+  if (data === 'm:add') {
+    await saveSession(userId, { flow: 'add', step: 'name', draft: {}, target_id: null }, env);
+    return sendMessage(userId, 'Название аромата?', env);
+  }
+
+  if (data === 'm:list') {
+    const all = await selectPerfumes(env);
+    const rows = all.map((p) => [{ text: `${p.brand} — ${p.name}`, callback_data: `pick:${p.id}` }]);
+    return sendMessage(userId, 'Выберите аромат:', env, {
+      reply_markup: { inline_keyboard: rows.length ? rows : [[{ text: '(пусто)', callback_data: 'noop' }]] },
+    });
+  }
+
+  if (data.startsWith('pick:')) {
+    const id = data.slice(5);
+    const all = await selectPerfumes(env);
+    const row = all.find((p) => p.id === id);
+    if (!row) return sendMessage(userId, 'Не найдено.', env);
+    return sendMessage(userId, renderCard(row), env, {
+      reply_markup: { inline_keyboard: [
+        [{ text: '✏️ Изменить', callback_data: `edit:${id}` }, { text: '🗑 Удалить', callback_data: `del:${id}` }],
+      ] },
+    });
+  }
+
+  if (data.startsWith('del:')) {
+    const id = data.slice(4);
+    return sendMessage(userId, `Удалить ${id}?`, env, {
+      reply_markup: { inline_keyboard: [[
+        { text: '⚠️ Да, удалить', callback_data: `delyes:${id}` },
+        { text: 'Нет', callback_data: 'noop' },
+      ]] },
+    });
+  }
+
+  if (data.startsWith('delyes:')) {
+    const id = data.slice(7);
+    await deletePerfume(id, env);
+    await deleteImages([id], env);  // best-effort: файлы с префиксом id
+    return sendMessage(userId, `Удалено: ${id}`, env, { reply_markup: mainMenuKeyboard() });
+  }
+
+  if (data.startsWith('edit:')) {
+    const id = data.slice(5);
+    await saveSession(userId, { flow: 'edit', step: 'pick_field', draft: {}, target_id: id }, env);
+    const fields = ['name', 'brand', 'description', 'price_5ml', 'price_10ml', 'inStock', 'featured'];
+    const kb = fields.map((f) => [{ text: f, callback_data: `field:${f}` }]);
+    return sendMessage(userId, 'Какое поле изменить?', env, { reply_markup: { inline_keyboard: kb } });
+  }
+
+  if (data.startsWith('field:') && session && session.flow === 'edit') {
+    const field = data.slice(6);
+    // Булевы поля переключаем сразу, без запроса значения.
+    if (field === 'inStock' || field === 'featured') {
+      const all = await selectPerfumes(env);
+      const row = all.find((p) => p.id === session.target_id);
+      const next = !(row && row[field]);
+      await patchPerfume(session.target_id, field, next, env);
+      await clearSession(userId, env);
+      return sendMessage(userId, `✅ ${field} = ${next}`, env, { reply_markup: mainMenuKeyboard() });
+    }
+    await saveSession(userId, { step: `editval:${field}` }, env);
+    return sendMessage(userId, `Новое значение для ${field}?`, env);
+  }
+
+  // Выбор варианта (gender/scentType/format) и Пропустить в потоке add.
+  if ((data.startsWith('v:') || data === 'skip') && session && session.flow === 'add') {
+    const value = data === 'skip' ? '' : data.slice(2);
+    return stepAdd(userId, session, value, env);
+  }
+
+  // Тумблеры флагов в шаге flags.
+  if (data.startsWith('flag:') && session && session.flow === 'add') {
+    const flag = data.slice(5);
+    const draft = { ...session.draft, [flag]: !session.draft[flag] };
+    await saveSession(userId, { draft }, env);
+    return sendFlagsStep(userId, draft, env);
+  }
+  if (data === 'flags:done' && session && session.flow === 'add') {
+    return stepAdd(userId, { ...session, step: 'flags' }, '', env);
+  }
+
+  if (data === 'photos:done' && session && session.flow === 'add') {
+    return stepAdd(userId, { ...session, step: 'photos' }, '', env);
+  }
+
+  if (data === 'confirm:save' && session && session.flow === 'add') {
+    const row = draftToPerfumeRow(session.draft);
+    await upsertPerfume(row, env);
+    await clearSession(userId, env);
+    return sendMessage(userId, `✅ Сохранено: ${row.id}`, env, { reply_markup: mainMenuKeyboard() });
+  }
+
+  return; // noop и неизвестные
+}
+
+async function handleMessage(msg, userId, session, env) {
+  if (!session) return showMenu(userId, env);
+
+  // Поток edit: ввод нового значения поля.
+  if (session.flow === 'edit' && session.step && session.step.startsWith('editval:')) {
+    const field = session.step.slice('editval:'.length);
+    const v = validateField(field, msg.text);
+    if (!v.ok) return sendMessage(userId, `❌ ${v.error}`, env);
+    await patchPerfume(session.target_id, field, v.value, env);
+    await clearSession(userId, env);
+    return sendMessage(userId, `✅ ${field} обновлено`, env, { reply_markup: mainMenuKeyboard() });
+  }
+
+  // Поток add.
+  if (session.flow === 'add') {
+    // Шаг фото: принимаем изображения.
+    if (session.step === 'photos' && msg.photo) {
+      const fileId = msg.photo[msg.photo.length - 1].file_id;  // самое крупное
+      const url = await downloadAndStorePhoto(fileId, session.draft, env);
+      const images = [...(session.draft.images || []), url];
+      await saveSession(userId, { draft: { ...session.draft, images } }, env);
+      return sendMessage(userId, `Фото добавлено (${images.length}). Ещё или «Готово».`, env, {
+        reply_markup: { inline_keyboard: [[{ text: '✅ Готово', callback_data: 'photos:done' }]] },
+      });
+    }
+    return stepAdd(userId, session, msg.text, env);
+  }
+
+  return showMenu(userId, env);
+}
+
+/** Обработать значение текущего шага add и спросить следующий. */
+async function stepAdd(userId, session, rawValue, env) {
+  const step = session.step;
+  let draft = session.draft || {};
+
+  // Шаг photos: фото уже накоплены; двигаемся к флагам.
+  if (step === 'photos') {
+    await saveSession(userId, { step: 'flags' }, env);
+    return sendFlagsStep(userId, draft, env);
+  }
+
+  // Шаг flags: финализируем id и показываем превью.
+  if (step === 'flags') {
+    const base = slugify(draft.brand, draft.name);
+    const all = await selectPerfumes(env);
+    const id = makeUniqueId(base, new Set(all.map((p) => p.id)));
+    draft = { ...draft, id };
+    await saveSession(userId, { step: 'confirm', draft }, env);
+    const row = draftToPerfumeRow(draft);
+    return sendMessage(userId, `Проверьте:\n\n${renderCard(row)}`, env, {
+      reply_markup: { inline_keyboard: [[
+        { text: '✅ Сохранить', callback_data: 'confirm:save' },
+        { text: '✖️ Отмена', callback_data: 'noop' },
+      ]] },
+    });
+  }
+
+  // Обычные шаги.
+  const res = advanceAdd(step, rawValue, draft);
+  if (!res.ok) return sendMessage(userId, `❌ ${res.error}`, env);
+  draft = { ...draft, ...res.draftPatch };
+  await saveSession(userId, { draft, step: res.nextStep }, env);
+  return promptStep(userId, res.nextStep, draft, env);
+}
+
+/** Текст-приглашение и клавиатура для шага. */
+async function promptStep(userId, step, draft, env) {
+  const prompts = {
+    brand: 'Бренд?',
+    description: 'Описание? (или Пропустить)',
+    gender: 'Пол:',
+    scentType: 'Тип аромата:',
+    format: 'Формат:',
+    price_5ml: 'Цена 5мл? (число или Пропустить)',
+    price_10ml: 'Цена 10мл? (или Пропустить)',
+    price_15ml: 'Цена 15мл? (или Пропустить)',
+    price_20ml: 'Цена 20мл? (или Пропустить)',
+    price_original: 'Цена оригинала? (или Пропустить)',
+    original_volume_ml: 'Объём оригинала, мл? (или Пропустить)',
+    notes_top: 'Верхние ноты через запятую? (или Пропустить)',
+    notes_middle: 'Средние ноты? (или Пропустить)',
+    notes_base: 'Базовые ноты? (или Пропустить)',
+    photos: 'Пришлите фото (можно несколько), затем «Готово». Или Пропустить.',
+  };
+
+  if (ENUMS[step]) {
+    return sendMessage(userId, prompts[step], env, { reply_markup: choiceKeyboard(ENUMS[step]) });
+  }
+  if (step === 'photos') {
+    return sendMessage(userId, prompts[step], env, {
+      reply_markup: { inline_keyboard: [[
+        { text: '✅ Готово', callback_data: 'photos:done' },
+        { text: '⏭ Пропустить', callback_data: 'photos:done' },
+      ]] },
+    });
+  }
+  if (step === 'flags') {
+    return sendFlagsStep(userId, draft, env);
+  }
+  // текстовые/ценовые шаги — с кнопкой Пропустить, кроме обязательных (brand)
+  const required = ['brand'];
+  const extra = required.includes(step) ? {} : { reply_markup: skipKeyboard() };
+  return sendMessage(userId, prompts[step] || `${step}?`, env, extra);
+}
+
+/** Клавиатура тумблеров флагов. */
+async function sendFlagsStep(userId, draft, env) {
+  const flag = (key, label) => ({
+    text: `${draft[key] ? '☑' : '☐'} ${label}`,
+    callback_data: `flag:${key}`,
+  });
+  return sendMessage(userId, 'Флаги (тап — переключить):', env, {
+    reply_markup: { inline_keyboard: [
+      [flag('inStock', 'В наличии'), flag('featured', 'Featured')],
+      [flag('newArrival', 'Новинка'), flag('bestseller', 'Хит')],
+      [{ text: '✅ Далее', callback_data: 'flags:done' }],
+    ] },
+  });
+}
+
+/** Скачать фото из Telegram и залить в Storage. → публичный URL. */
+async function downloadAndStorePhoto(fileId, draft, env) {
+  const fileRes = await fetch(`https://api.telegram.org/bot${env.ADMIN_BOT_TOKEN}/getFile?file_id=${fileId}`);
+  const fileData = await fileRes.json();
+  const path = fileData.result.file_path;
+  const binRes = await fetch(`https://api.telegram.org/file/bot${env.ADMIN_BOT_TOKEN}/${path}`);
+  const bytes = await binRes.arrayBuffer();
+  const base = slugify(draft.brand || 'x', draft.name || 'x');
+  const n = (draft.images || []).length + 1;
+  return uploadImage(bytes, 'image/jpeg', `${base}-${n}.jpg`, env);
+}
+
 /** Рендер карточки аромата (превью как на сайте). */
 function renderCard(row) {
   const lines = [
@@ -336,3 +604,39 @@ function renderCard(row) {
   if (imgCount) lines.push(`Фото: ${imgCount}`);
   return lines.filter((l) => l !== '').join('\n');
 }
+
+// --- Точка входа Worker ---
+export default {
+  async fetch(request, env) {
+    if (request.method !== 'POST') return new Response('ok');
+
+    // Защита: webhook-секрет (задаётся при setWebhook).
+    const secret = request.headers.get('X-Telegram-Bot-Api-Secret-Token');
+    if (env.ADMIN_WEBHOOK_SECRET && secret !== env.ADMIN_WEBHOOK_SECRET) {
+      return new Response('unauthorized', { status: 401 });
+    }
+
+    let update;
+    try {
+      update = await request.json();
+    } catch {
+      return new Response('ok');
+    }
+
+    const msg = update.message;
+    const cq = update.callback_query;
+    const from = (msg && msg.from) || (cq && cq.from);
+    if (!from) return new Response('ok');
+
+    // Allowlist: чужих молча игнорируем.
+    if (!isAllowed(from.id, env.ADMIN_USER_IDS)) return new Response('ok');
+
+    try {
+      await handleUpdate(update, env);
+    } catch (e) {
+      // Сообщаем админу; draft в сессии сохранён (если был).
+      await sendMessage(from.id, `⚠️ Ошибка: ${e.message}. Попробуйте ещё раз.`, env).catch(() => {});
+    }
+    return new Response('ok');
+  },
+};
