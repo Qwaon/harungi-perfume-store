@@ -113,6 +113,62 @@ export async function verifyInitData(initData, botToken) {
   }
 }
 
+// --- Supabase-слой заказов (service_role) ---
+function sbHeaders(env) {
+  return {
+    apikey: env.SUPABASE_SERVICE_KEY,
+    Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+    'Content-Type': 'application/json',
+  };
+}
+
+/**
+ * Создаёт заказ в Supabase: orders → order_items.
+ * → { id, orderNumber } или null при сбое (фолбэк: заказ всё равно уйдёт в чат).
+ */
+async function createSupabaseOrder(payload, env) {
+  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) return null;
+  try {
+    const { order, items } = buildOrderRows(payload);
+    const res = await fetch(`${env.SUPABASE_URL}/rest/v1/orders`, {
+      method: 'POST',
+      headers: { ...sbHeaders(env), Prefer: 'return=representation' },
+      body: JSON.stringify(order),
+    });
+    if (!res.ok) return null;
+    const rows = await res.json();
+    const created = rows[0];
+    if (!created) return null;
+
+    // Позиции — одним запросом массивом. Частичный сбой не откатывает заказ.
+    const itemRows = items.map((it) => ({ ...it, order_id: created.id }));
+    await fetch(`${env.SUPABASE_URL}/rest/v1/order_items`, {
+      method: 'POST',
+      headers: sbHeaders(env),
+      body: JSON.stringify(itemRows),
+    }).catch(() => {});  // best-effort
+
+    return { id: created.id, orderNumber: created.order_number };
+  } catch {
+    return null;
+  }
+}
+
+/** PATCH статуса заказа в Supabase. true при успехе. */
+async function patchSupabaseStatus(id, status, env) {
+  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) return false;
+  try {
+    const res = await fetch(`${env.SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      headers: sbHeaders(env),
+      body: JSON.stringify({ status }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 export default {
   async fetch(request, env) {
     const allowedOrigin = env.ALLOWED_ORIGIN || '*';
@@ -144,17 +200,17 @@ async function handleOrder(request, env, allowedOrigin) {
       return json({ ok: false, error: validationError }, 400, allowedOrigin);
     }
 
-    // Создаём запись в Airtable (источник правды по статусу).
-    const order = await createAirtableOrder(payload, env);
+    // Создаём запись в Supabase (источник правды по статусу).
+    const order = await createSupabaseOrder(payload, env);
 
     const text = formatTelegramMessage(payload, order && order.orderNumber);
     const sendBody = {
       chat_id: env.TELEGRAM_CHAT_ID,
       text,
     };
-    // Кнопки статуса добавляются только если запись создана (есть recordId).
-    if (order && order.recordId) {
-      sendBody.reply_markup = statusKeyboard(order.recordId);
+    // Кнопки статуса добавляются только если запись создана (есть id).
+    if (order && order.id) {
+      sendBody.reply_markup = statusKeyboard(order.id);
     }
 
     const telegramResponse = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
@@ -229,65 +285,7 @@ function formatTelegramMessage(payload, orderNumber) {
   return lines.join('\n');
 }
 
-// Создаёт запись заказа в Airtable Orders. Возвращает { recordId, orderNumber }
-// или null при любой ошибке/отсутствии ключей (деградация: заказ всё равно уйдёт в чат).
-async function createAirtableOrder(payload, env) {
-  if (!env.AIRTABLE_API_KEY || !env.AIRTABLE_BASE_ID) return null;
-  const table = env.AIRTABLE_ORDERS_TABLE || 'Orders';
-
-  const isCart = Array.isArray(payload.items);
-  let itemsText;
-  let total;
-  let type;
-
-  if (isCart) {
-    itemsText = payload.items
-      .map((i) => {
-        const qty = i.quantity > 1 ? ` ×${i.quantity}` : '';
-        return `${i.brand} — ${i.perfumeName} ${i.volumeLabel}${qty} — ${Number(i.price * i.quantity)} ₽`;
-      })
-      .join('\n');
-    total = Number(payload.total);
-    type = 'cart';
-  } else {
-    itemsText = `${payload.brand} — ${payload.perfumeName} ${payload.volumeLabel || payload.volume} — ${Number(payload.price)} ₽`;
-    total = Number(payload.price);
-    type = payload.type || (payload.messageType === 'consultation' ? 'consultation' : 'single');
-  }
-
-  const fields = {
-    status: 'new',
-    customerName: String(payload.name),
-    contact: String(payload.contact),
-    items: itemsText,
-    total,
-    type,
-    source: String(payload.source || ''),
-    pageUrl: String(payload.pageUrl || ''),
-    tgUserId: payload.tgUserId ? String(payload.tgUserId) : '',
-  };
-
-  try {
-    const res = await fetch(
-      `https://api.airtable.com/v0/${env.AIRTABLE_BASE_ID}/${encodeURIComponent(table)}`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${env.AIRTABLE_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ fields, typecast: true }),
-      }
-    );
-    if (!res.ok) return null;
-    const data = await res.json();
-    return { recordId: data.id, orderNumber: data.fields && data.fields.orderNumber };
-  } catch {
-    return null;
-  }
-}
-
-// Inline-клавиатура для смены статуса. callback_data = "s:<recordId>:<status>".
+// Inline-клавиатура для смены статуса. callback_data = "s:<id>:<status>".
 function statusKeyboard(recordId, activeStatus) {
   const btn = (status) => ({
     text: activeStatus === status ? `• ${STATUS_LABELS[status]}` : STATUS_LABELS[status],
@@ -330,7 +328,7 @@ async function handleTelegramCallback(request, env) {
   const status = parsed.status;
   const label = STATUS_LABELS[status];
 
-  const patched = await patchAirtableStatus(recordId, status, env);
+  const patched = await patchSupabaseStatus(recordId, status, env);
 
   if (!patched) {
     await answerCallback(cq.id, 'Не удалось обновить, попробуйте ещё', env);
@@ -357,27 +355,6 @@ async function handleTelegramCallback(request, env) {
   return new Response('ok');
 }
 
-// PATCH статуса в Airtable. true при успехе, false при ошибке/отсутствии ключей.
-async function patchAirtableStatus(recordId, status, env) {
-  if (!env.AIRTABLE_API_KEY || !env.AIRTABLE_BASE_ID) return false;
-  const table = env.AIRTABLE_ORDERS_TABLE || 'Orders';
-  try {
-    const res = await fetch(
-      `https://api.airtable.com/v0/${env.AIRTABLE_BASE_ID}/${encodeURIComponent(table)}/${recordId}`,
-      {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${env.AIRTABLE_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ fields: { status }, typecast: true }),
-      }
-    );
-    return res.ok;
-  } catch {
-    return false;
-  }
-}
 
 // Тост менеджеру при нажатии кнопки.
 async function answerCallback(callbackQueryId, text, env) {
