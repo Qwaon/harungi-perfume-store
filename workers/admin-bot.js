@@ -282,3 +282,57 @@ async function clearSession(userId, env) {
     { method: 'DELETE', headers: sbHeaders(env) }
   ).catch(() => {});
 }
+
+// --- Telegram API слой ---
+async function tg(method, body, env) {
+  return fetch(`https://api.telegram.org/bot${env.ADMIN_BOT_TOKEN}/${method}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
+async function sendMessage(chatId, text, env, extra = {}) {
+  return tg('sendMessage', { chat_id: chatId, text, ...extra }, env);
+}
+
+/** Инлайн-клавиатура главного меню. */
+function mainMenuKeyboard() {
+  return { inline_keyboard: [
+    [{ text: '➕ Добавить', callback_data: 'm:add' }],
+    [{ text: '📋 Список / Редактировать', callback_data: 'm:list' }],
+  ] };
+}
+
+/** Клавиатура выбора из вариантов (gender/scentType/format). callback_data = "v:<значение>". */
+function choiceKeyboard(values) {
+  return { inline_keyboard: values.map((v) => [{ text: v, callback_data: `v:${v}` }]) };
+}
+
+/** Кнопка «Пропустить». */
+function skipKeyboard() {
+  return { inline_keyboard: [[{ text: '⏭ Пропустить', callback_data: 'skip' }]] };
+}
+
+/** Рендер карточки аромата (превью как на сайте). */
+function renderCard(row) {
+  const lines = [
+    `${row.brand} — ${row.name}`,
+    row.description || '',
+    '',
+    `Пол: ${row.gender || '—'}  Тип: ${row.scentType || '—'}  Формат: ${row.format || '—'}`,
+  ];
+  const priceLabels = [
+    ['price_5ml', '5'], ['price_10ml', '10'], ['price_15ml', '15'],
+    ['price_20ml', '20'], ['price_original', 'ориг'],
+  ];
+  const prices = priceLabels
+    .filter(([key]) => row[key] != null)
+    .map(([key, label]) => `${label}: ${row[key]}₽`);
+  if (prices.length) lines.push(`Цены: ${prices.join('  ')}`);
+  const flags = ['inStock', 'featured', 'newArrival', 'bestseller'].filter((f) => row[f]);
+  if (flags.length) lines.push(`Флаги: ${flags.join(', ')}`);
+  const imgCount = (typeof row.images === 'string' && row.images ? row.images.split(',').length : (row.images || []).length);
+  if (imgCount) lines.push(`Фото: ${imgCount}`);
+  return lines.filter((l) => l !== '').join('\n');
+}
