@@ -1,50 +1,20 @@
 // src/app/account/page.tsx
-'use client';
+// Серверный компонент: тянет живой каталог (Supabase, ISR) и отдаёт его
+// клиентской части. Так FavoritesGrid резолвит избранное по реальным id
+// каталога, а не по сид-данным perfumes.json. Гейт isTelegram — внутри клиента.
+import type { Perfume } from '@/types';
+import { getPerfumes } from '@/data/catalog';
+import AccountClient from '@/components/account/AccountClient';
 
-import { useTelegram } from '@/contexts/TelegramContext';
-import AccountProfile from '@/components/account/AccountProfile';
-import OrderHistory from '@/components/account/OrderHistory';
-import FavoritesGrid from '@/components/account/FavoritesGrid';
-import SupportLinks from '@/components/account/SupportLinks';
-import { TELEGRAM_URL } from '@/lib/constants';
+export const revalidate = 60;
 
-export default function AccountPage() {
-  const { isTelegram, user } = useTelegram();
-
-  if (isTelegram === undefined) {
-    return (
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
-        <div className="h-16 w-48 rounded-xl bg-cream-200 animate-pulse mb-8" />
-        <div className="h-40 rounded-xl bg-cream-200 animate-pulse" />
-      </div>
-    );
+export default async function AccountPage() {
+  let perfumes: Perfume[];
+  try {
+    perfumes = await getPerfumes();
+  } catch {
+    // Каталог недоступен — раздел всё равно работает (избранное просто пусто).
+    perfumes = [];
   }
-
-  if (!isTelegram) {
-    return (
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-16 text-center">
-        <h1 className="font-display text-3xl font-light text-ink-900 mb-3">Аккаунт</h1>
-        <p className="text-ink-500 text-sm mb-8">
-          Раздел доступен в нашем Telegram-приложении.
-        </p>
-        <a
-          href={TELEGRAM_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn-primary inline-block"
-        >
-          Открыть в Telegram
-        </a>
-      </div>
-    );
-  }
-
-  return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
-      <AccountProfile user={user} />
-      <OrderHistory />
-      <FavoritesGrid />
-      <SupportLinks />
-    </div>
-  );
+  return <AccountClient perfumes={perfumes} />;
 }

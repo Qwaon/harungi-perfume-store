@@ -2,10 +2,10 @@
 'use client';
 
 import { useFavorites } from '@/contexts/FavoritesContext';
-import { perfumes } from '@/data/perfumes';
+import type { Perfume } from '@/types';
 import ProductCard from '@/components/ProductCard';
 
-export default function FavoritesGrid() {
+export default function FavoritesGrid({ perfumes }: { perfumes: Perfume[] }) {
   const { favorites, hydrated } = useFavorites();
 
   if (!hydrated) {

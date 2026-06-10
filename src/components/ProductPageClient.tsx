@@ -122,7 +122,7 @@ export default function ProductPageClient({ perfume, related }: Props) {
                     aria-pressed={fav}
                   >
                     <svg width="22" height="22" viewBox="0 0 24 24" fill={fav ? '#5c6b3f' : 'none'} stroke="#5c6b3f" strokeWidth="1.8">
-                      <path d="M12 21s-7.5-4.6-10-9.2C.6 9 1.6 5.5 5 5.5c2 0 3.2 1.2 4 2.3.8-1.1 2-2.3 4-2.3 3.4 0 4.4 3.5 3 6.3C19.5 16.4 12 21 12 21Z" strokeLinejoin="round" />
+                      <path d="M12 20.25l-1.45-1.32C5.4 14.25 2 11.18 2 7.5 2 4.42 4.42 2 7.5 2c1.74 0 3.41.81 4.5 2.09C13.09 2.81 14.76 2 16.5 2 19.58 2 22 4.42 22 7.5c0 3.68-3.4 6.75-8.55 11.43L12 20.25z" strokeLinejoin="round" strokeLinecap="round" />
                     </svg>
                   </button>
                 </div>

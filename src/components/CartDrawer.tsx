@@ -233,13 +233,17 @@ export default function CartDrawer() {
 
       <CartCheckoutModal
         isOpen={checkoutOpen}
-        onClose={() => setCheckoutOpen(false)}
+        onClose={() => {
+          setCheckoutOpen(false);
+          closeCart();
+        }}
         items={items}
         total={total}
+        // Только очищаем корзину — НЕ закрываем модалку, иначе экран «Заявка
+        // принята» мгновенно пропадает. Закрытие — по кнопке «Закрыть»/крестику
+        // (onClose), тогда же закрываем и drawer.
         onSuccess={() => {
-          setCheckoutOpen(false);
           clearCart();
-          closeCart();
         }}
       />
     </>
