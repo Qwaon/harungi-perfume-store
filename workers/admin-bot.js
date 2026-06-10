@@ -35,6 +35,23 @@ export function makeUniqueId(base, existing) {
   return `${base}-${n}`;
 }
 
+/**
+ * Срез страницы списка. page клампится в [0, pages-1].
+ * → { slice, page, pages, hasPrev, hasNext }.
+ */
+export function paginate(items, page, size) {
+  const pages = Math.max(1, Math.ceil(items.length / size));
+  const p = Math.min(Math.max(0, page | 0), pages - 1);
+  const start = p * size;
+  return {
+    slice: items.slice(start, start + size),
+    page: p,
+    pages,
+    hasPrev: p > 0,
+    hasNext: p < pages - 1,
+  };
+}
+
 // --- Допустимые значения single-select (из src/types/index.ts) ---
 export const ENUMS = {
   gender: ['мужской', 'женский', 'унисекс'],
@@ -44,6 +61,49 @@ export const ENUMS = {
 
 const PRICE_STEPS = ['price_5ml', 'price_10ml', 'price_15ml', 'price_20ml', 'price_original', 'original_volume_ml'];
 const REQUIRED_TEXT = ['name', 'brand'];
+
+// --- Поля правки существующего аромата ---
+// kind: 'text' — ввод значения; 'enum' — выбор кнопкой; 'bool' — тумблер сразу.
+export const EDIT_FIELDS = [
+  { key: 'name', label: 'Название', kind: 'text' },
+  { key: 'brand', label: 'Бренд', kind: 'text' },
+  { key: 'description', label: 'Описание', kind: 'text' },
+  { key: 'price_5ml', label: 'Цена 5мл', kind: 'text' },
+  { key: 'price_10ml', label: 'Цена 10мл', kind: 'text' },
+  { key: 'price_15ml', label: 'Цена 15мл', kind: 'text' },
+  { key: 'price_20ml', label: 'Цена 20мл', kind: 'text' },
+  { key: 'price_original', label: 'Цена ориг.', kind: 'text' },
+  { key: 'original_volume_ml', label: 'Объём ориг.', kind: 'text' },
+  { key: 'gender', label: 'Пол', kind: 'enum' },
+  { key: 'scentType', label: 'Тип', kind: 'enum' },
+  { key: 'format', label: 'Формат', kind: 'enum' },
+  { key: 'notes_top', label: 'Верх. ноты', kind: 'text' },
+  { key: 'notes_middle', label: 'Сред. ноты', kind: 'text' },
+  { key: 'notes_base', label: 'Базов. ноты', kind: 'text' },
+  { key: 'inStock', label: 'В наличии', kind: 'bool' },
+  { key: 'featured', label: 'Featured', kind: 'bool' },
+  { key: 'newArrival', label: 'Новинка', kind: 'bool' },
+  { key: 'bestseller', label: 'Хит', kind: 'bool' },
+];
+
+/** Клавиатура меню правки: все поля (по 2 в ряд) + управление фото + возврат к карточке. */
+export function editFieldsKeyboard(id, row) {
+  const buttons = EDIT_FIELDS.map((f) => {
+    if (f.kind === 'bool') {
+      const on = Boolean(row[f.key]);
+      return { text: `${on ? '☑' : '☐'} ${f.label}`, callback_data: `efield:${id}:${f.key}` };
+    }
+    return { text: f.label, callback_data: `efield:${id}:${f.key}` };
+  });
+  const rows = [];
+  for (let i = 0; i < buttons.length; i += 2) rows.push(buttons.slice(i, i + 2));
+  rows.push([
+    { text: '🖼 Добавить фото', callback_data: `ephoto:add:${id}` },
+    { text: '🗑 Очистить фото', callback_data: `ephoto:clear:${id}` },
+  ]);
+  rows.push([{ text: '‹ К карточке', callback_data: `card:${id}` }]);
+  return { inline_keyboard: rows };
+}
 
 /** Валидация значения по шагу. → {ok:true,value} | {ok:false,error}. */
 export function validateField(step, raw) {
@@ -296,12 +356,64 @@ async function sendMessage(chatId, text, env, extra = {}) {
   return tg('sendMessage', { chat_id: chatId, text, ...extra }, env);
 }
 
-/** Инлайн-клавиатура главного меню. */
+async function editMessageText(chatId, messageId, text, env, extra = {}) {
+  return tg('editMessageText', { chat_id: chatId, message_id: messageId, text, ...extra }, env);
+}
+
+async function deleteMessage(chatId, messageId, env) {
+  return tg('deleteMessage', { chat_id: chatId, message_id: messageId }, env).catch(() => {});
+}
+
+async function sendPhoto(chatId, photo, caption, env, extra = {}) {
+  return tg('sendPhoto', { chat_id: chatId, photo, caption, ...extra }, env);
+}
+
+/** message_id из ответа Telegram (sendMessage/sendPhoto) или null. */
+async function messageIdOf(res) {
+  const body = await res.json().catch(() => null);
+  return (body && body.result && body.result.message_id) || null;
+}
+
+/**
+ * Чистый билдер экрана навигации. → { text, reply_markup }.
+ * screen: 'menu' | 'list'. (card/editmenu строятся отдельно — нужны сетевые данные.)
+ */
+export function buildScreen(screen, data) {
+  if (screen === 'menu') {
+    return {
+      text: 'Каталог HARUNGI. Что делаем?',
+      reply_markup: { inline_keyboard: [
+        [{ text: '➕ Добавить', callback_data: 'm:add' }],
+        [{ text: '📋 Список / Редактировать', callback_data: 'list:0' }],
+      ] },
+    };
+  }
+  if (screen === 'list') {
+    const { perfumes, page } = data;
+    if (!perfumes.length) {
+      return {
+        text: 'Каталог пуст. Добавьте первый аромат.',
+        reply_markup: { inline_keyboard: [[{ text: '🏠 В меню', callback_data: 'm:menu' }]] },
+      };
+    }
+    const pg = paginate(perfumes, page, 8);
+    const rows = pg.slice.map((p) => [{ text: `${p.brand} — ${p.name}`, callback_data: `pick:${p.id}` }]);
+    const nav = [];
+    if (pg.hasPrev) nav.push({ text: '‹ Назад', callback_data: `list:${pg.page - 1}` });
+    if (pg.hasNext) nav.push({ text: 'Далее ›', callback_data: `list:${pg.page + 1}` });
+    if (nav.length) rows.push(nav);
+    rows.push([{ text: '🏠 В меню', callback_data: 'm:menu' }]);
+    return {
+      text: `Выберите аромат:  (стр. ${pg.page + 1} / ${pg.pages})`,
+      reply_markup: { inline_keyboard: rows },
+    };
+  }
+  throw new Error(`unknown screen: ${screen}`);
+}
+
+/** Клавиатура главного меню (для reply_markup после успешного действия). */
 function mainMenuKeyboard() {
-  return { inline_keyboard: [
-    [{ text: '➕ Добавить', callback_data: 'm:add' }],
-    [{ text: '📋 Список / Редактировать', callback_data: 'm:list' }],
-  ] };
+  return buildScreen('menu', {}).reply_markup;
 }
 
 /** Клавиатура выбора из вариантов (gender/scentType/format). callback_data = "v:<значение>". */
@@ -329,11 +441,18 @@ async function handleUpdate(update, env) {
     await saveSession(userId, { last_update_id: update.update_id }, env);
   }
 
-  // Команды.
-  if (msg && msg.text === '/start') return showMenu(userId, env);
+  // Команды (работают всегда, даже посреди потока).
+  if (msg && msg.text === '/start') return showMenu(userId, session, env);
+  if (msg && msg.text === '/add') {
+    await dropPhotoMessage(userId, session, env);
+    await saveSession(userId, { flow: 'add', step: 'name', draft: {}, target_id: null }, env);
+    return sendMessage(userId, 'Название аромата?', env);
+  }
+  if (msg && msg.text === '/list') return showList(userId, session, 0, env);
   if (msg && msg.text === '/cancel') {
+    await dropPhotoMessage(userId, session, env);
     await clearSession(userId, env);
-    return sendMessage(userId, 'Отменено.', env, { reply_markup: mainMenuKeyboard() });
+    return showMenu(userId, null, env);
   }
 
   // Нажатия кнопок.
@@ -346,79 +465,228 @@ async function handleUpdate(update, env) {
   if (msg) return handleMessage(msg, userId, session, env);
 }
 
-async function showMenu(userId, env) {
-  return sendMessage(userId, 'Каталог HARUNGI. Что делаем?', env, { reply_markup: mainMenuKeyboard() });
+/**
+ * Рисует экран навигации (menu/list), редактируя меню-сообщение на месте.
+ * Если текущее сообщение — фото-карточка или редактирование не удалось —
+ * шлёт новое и сохраняет его id. Сбрасывает флаг menu_is_photo.
+ */
+async function showScreen(userId, session, screen, data, env) {
+  const { text, reply_markup } = buildScreen(screen, data);
+  const menuId = session && session.menu_message_id;
+  const isPhoto = session && session.menu_is_photo;
+
+  if (menuId && isPhoto) {
+    // Фото нельзя превратить в текст — удаляем и шлём новое.
+    await deleteMessage(userId, menuId, env);
+  } else if (menuId) {
+    const res = await editMessageText(userId, menuId, text, env, { reply_markup });
+    if (res.ok) {
+      if (isPhoto) await saveSession(userId, { menu_is_photo: false }, env);
+      return;
+    }
+  }
+  const sent = await sendMessage(userId, text, env, { reply_markup });
+  const newId = await messageIdOf(sent);
+  await saveSession(userId, { menu_message_id: newId, menu_is_photo: false }, env);
+}
+
+/**
+ * Рисует произвольный экран (текст+клавиатура заданы напрямую) на месте.
+ * Для card-без-фото и editmenu, где текст не из buildScreen.
+ */
+async function showCustom(userId, session, text, reply_markup, env) {
+  const menuId = session && session.menu_message_id;
+  const isPhoto = session && session.menu_is_photo;
+
+  if (menuId && isPhoto) {
+    await deleteMessage(userId, menuId, env);
+  } else if (menuId) {
+    const res = await editMessageText(userId, menuId, text, env, { reply_markup });
+    if (res.ok) {
+      if (isPhoto) await saveSession(userId, { menu_is_photo: false }, env);
+      return;
+    }
+  }
+  const sent = await sendMessage(userId, text, env, { reply_markup });
+  const newId = await messageIdOf(sent);
+  await saveSession(userId, { menu_message_id: newId, menu_is_photo: false }, env);
+}
+
+/** Если текущее меню-сообщение — фото-карточка, удалить его (перед текстовым экраном). */
+async function dropPhotoMessage(userId, session, env) {
+  if (session && session.menu_is_photo && session.menu_message_id) {
+    await deleteMessage(userId, session.menu_message_id, env);
+    await saveSession(userId, { menu_message_id: null, menu_is_photo: false }, env);
+    session.menu_message_id = null;
+    session.menu_is_photo = false;
+  }
+}
+
+async function showMenu(userId, session, env) {
+  return showScreen(userId, session, 'menu', {}, env);
+}
+
+async function showList(userId, session, page, env) {
+  const perfumes = await selectPerfumes(env);
+  perfumes.sort((a, b) => `${a.brand} ${a.name}`.localeCompare(`${b.brand} ${b.name}`, 'ru'));
+  return showScreen(userId, session, 'list', { perfumes, page }, env);
+}
+
+/** Кнопки под карточкой аромата. */
+function cardKeyboard(id) {
+  return { inline_keyboard: [
+    [{ text: '✏️ Изменить', callback_data: `editmenu:${id}` }, { text: '🗑 Удалить', callback_data: `del:${id}` }],
+    [{ text: '‹ К списку', callback_data: 'list:0' }, { text: '🏠 В меню', callback_data: 'm:menu' }],
+  ] };
+}
+
+/** Первое фото аромата (или null). images хранится CSV-строкой. */
+function firstImageUrl(row) {
+  return typeof row.images === 'string' && row.images ? row.images.split(',')[0].trim() : null;
+}
+
+/**
+ * Показ карточки. С фото — отдельное photo-сообщение (Telegram не редактирует
+ * текст↔фото): прежнее меню-сообщение удаляется, ставится флаг menu_is_photo.
+ * Без фото — обычный текстовый экран на месте.
+ */
+async function showCard(userId, session, id, env) {
+  const all = await selectPerfumes(env);
+  const row = all.find((p) => p.id === id);
+  if (!row) return showMenu(userId, session, env);
+
+  const image = firstImageUrl(row);
+  if (image) {
+    if (session && session.menu_message_id) await deleteMessage(userId, session.menu_message_id, env);
+    const sent = await sendPhoto(userId, image, renderCard(row), env, { reply_markup: cardKeyboard(id) });
+    const newId = await messageIdOf(sent);
+    if (newId) {
+      await saveSession(userId, { menu_message_id: newId, menu_is_photo: true }, env);
+    } else {
+      // sendPhoto не прошёл (битый URL) — покажем текстовую карточку как фолбэк.
+      await showCustom(userId, session, `${renderCard(row)}\n\n⚠️ Фото не загрузилось (проверьте ссылку).`, cardKeyboard(id), env);
+    }
+    return;
+  }
+  return showCustom(userId, session, renderCard(row), cardKeyboard(id), env);
 }
 
 async function handleCallback(cq, userId, session, env) {
   const data = cq.data || '';
 
+  // --- Навигация ---
+  if (data === 'm:menu') {
+    if (session && session.flow && session.flow !== 'view') await clearSession(userId, env);
+    await dropPhotoMessage(userId, session, env);
+    return showMenu(userId, session, env);
+  }
+
   if (data === 'm:add') {
+    await dropPhotoMessage(userId, session, env);
     await saveSession(userId, { flow: 'add', step: 'name', draft: {}, target_id: null }, env);
     return sendMessage(userId, 'Название аромата?', env);
   }
 
-  if (data === 'm:list') {
-    const all = await selectPerfumes(env);
-    const rows = all.map((p) => [{ text: `${p.brand} — ${p.name}`, callback_data: `pick:${p.id}` }]);
-    return sendMessage(userId, 'Выберите аромат:', env, {
-      reply_markup: { inline_keyboard: rows.length ? rows : [[{ text: '(пусто)', callback_data: 'noop' }]] },
-    });
+  if (data.startsWith('list:')) {
+    const page = Number(data.slice(5)) || 0;
+    return showList(userId, session, page, env);
   }
 
-  if (data.startsWith('pick:')) {
+  if (data.startsWith('pick:') || data.startsWith('card:')) {
     const id = data.slice(5);
-    const all = await selectPerfumes(env);
-    const row = all.find((p) => p.id === id);
-    if (!row) return sendMessage(userId, 'Не найдено.', env);
-    return sendMessage(userId, renderCard(row), env, {
-      reply_markup: { inline_keyboard: [
-        [{ text: '✏️ Изменить', callback_data: `edit:${id}` }, { text: '🗑 Удалить', callback_data: `del:${id}` }],
-      ] },
-    });
+    return showCard(userId, session, id, env);
   }
 
+  // --- Удаление ---
   if (data.startsWith('del:')) {
+    await dropPhotoMessage(userId, session, env);
     const id = data.slice(4);
-    return sendMessage(userId, `Удалить ${id}?`, env, {
-      reply_markup: { inline_keyboard: [[
-        { text: '⚠️ Да, удалить', callback_data: `delyes:${id}` },
-        { text: 'Нет', callback_data: 'noop' },
-      ]] },
-    });
+    const fresh = await getSession(userId, env);
+    return showCustom(userId, fresh, `Удалить «${id}»? Это необратимо.`, { inline_keyboard: [[
+      { text: '⚠️ Да, удалить', callback_data: `delyes:${id}` },
+      { text: '‹ Отмена', callback_data: `card:${id}` },
+    ]] }, env);
   }
 
   if (data.startsWith('delyes:')) {
     const id = data.slice(7);
     await deletePerfume(id, env);
     await deleteImages([id], env);  // best-effort: файлы с префиксом id
-    return sendMessage(userId, `Удалено: ${id}`, env, { reply_markup: mainMenuKeyboard() });
+    await clearSession(userId, env);
+    return sendMessage(userId, `🗑 Удалено: ${id}`, env, { reply_markup: mainMenuKeyboard() });
   }
 
-  if (data.startsWith('edit:')) {
-    const id = data.slice(5);
+  // --- Правка ---
+  if (data.startsWith('editmenu:')) {
+    await dropPhotoMessage(userId, session, env);
+    const id = data.slice(9);
+    const all = await selectPerfumes(env);
+    const row = all.find((p) => p.id === id) || {};
+    const fresh = await getSession(userId, env);
     await saveSession(userId, { flow: 'edit', step: 'pick_field', draft: {}, target_id: id }, env);
-    const fields = ['name', 'brand', 'description', 'price_5ml', 'price_10ml', 'inStock', 'featured'];
-    const kb = fields.map((f) => [{ text: f, callback_data: `field:${f}` }]);
-    return sendMessage(userId, 'Какое поле изменить?', env, { reply_markup: { inline_keyboard: kb } });
+    return showCustom(userId, fresh, `✏️ ${row.brand || ''} — ${row.name || id}\nЧто изменить?`, editFieldsKeyboard(id, row), env);
   }
 
-  if (data.startsWith('field:') && session && session.flow === 'edit') {
-    const field = data.slice(6);
-    // Булевы поля переключаем сразу, без запроса значения.
-    if (field === 'inStock' || field === 'featured') {
+  if (data.startsWith('efield:') && session && session.flow === 'edit') {
+    const [, id, field] = data.split(':');
+    const meta = EDIT_FIELDS.find((f) => f.key === field);
+    if (!meta) return;
+
+    if (meta.kind === 'bool') {
       const all = await selectPerfumes(env);
-      const row = all.find((p) => p.id === session.target_id);
-      const next = !(row && row[field]);
-      await patchPerfume(session.target_id, field, next, env);
-      await clearSession(userId, env);
-      return sendMessage(userId, `✅ ${field} = ${next}`, env, { reply_markup: mainMenuKeyboard() });
+      const row = all.find((p) => p.id === id) || {};
+      const next = !row[field];
+      await patchPerfume(id, field, next, env);
+      const updated = { ...row, [field]: next };
+      return showCustom(userId, session, `✅ ${meta.label}: ${next ? 'да' : 'нет'}\nЧто изменить ещё?`,
+        editFieldsKeyboard(id, updated), env);
     }
+
+    if (meta.kind === 'enum') {
+      await saveSession(userId, { step: `editval:${field}` }, env);
+      const kb = { inline_keyboard: [
+        ...ENUMS[field].map((v) => [{ text: v, callback_data: `eset:${id}:${field}:${v}` }]),
+        [{ text: '‹ Назад', callback_data: `editmenu:${id}` }],
+      ] };
+      return showCustom(userId, session, `${meta.label} — выберите:`, kb, env);
+    }
+
+    // text — просим ввод сообщением
     await saveSession(userId, { step: `editval:${field}` }, env);
-    return sendMessage(userId, `Новое значение для ${field}?`, env);
+    return sendMessage(userId, `Новое значение — ${meta.label}? Отправьте сообщением.`, env);
   }
 
-  // Выбор варианта (gender/scentType/format) и Пропустить в потоке add.
+  if (data.startsWith('eset:') && session && session.flow === 'edit') {
+    const [, id, field, value] = data.split(':');
+    const v = validateField(field, value);
+    if (!v.ok) return;
+    await patchPerfume(id, field, v.value, env);
+    await saveSession(userId, { step: 'pick_field' }, env);
+    const all = await selectPerfumes(env);
+    const row = all.find((p) => p.id === id) || {};
+    return showCustom(userId, session, '✅ обновлено\nЧто изменить ещё?', editFieldsKeyboard(id, row), env);
+  }
+
+  if (data.startsWith('ephoto:add:') && session && session.flow === 'edit') {
+    const id = data.slice('ephoto:add:'.length);
+    await saveSession(userId, { step: 'editphoto', target_id: id }, env);
+    return sendMessage(userId, 'Пришлите фото (можно несколько). Когда закончите — «Готово».', env, {
+      reply_markup: { inline_keyboard: [[{ text: '✅ Готово', callback_data: `editmenu:${id}` }]] },
+    });
+  }
+
+  if (data.startsWith('ephoto:clear:') && session && session.flow === 'edit') {
+    const id = data.slice('ephoto:clear:'.length);
+    await patchPerfume(id, 'images', null, env);
+    await deleteImages([id], env);
+    await saveSession(userId, { step: 'pick_field' }, env);
+    const all = await selectPerfumes(env);
+    const row = all.find((p) => p.id === id) || {};
+    return showCustom(userId, session, '✅ Фото очищены.\nЧто изменить ещё?', editFieldsKeyboard(id, row), env);
+  }
+
+  // --- Поток add ---
+  // Выбор варианта (gender/scentType/format) и Пропустить.
   if ((data.startsWith('v:') || data === 'skip') && session && session.flow === 'add') {
     const value = data === 'skip' ? '' : data.slice(2);
     return stepAdd(userId, session, value, env);
@@ -446,20 +714,38 @@ async function handleCallback(cq, userId, session, env) {
     return sendMessage(userId, `✅ Сохранено: ${row.id}`, env, { reply_markup: mainMenuKeyboard() });
   }
 
-  return; // noop и неизвестные
+  return; // неизвестные
 }
 
 async function handleMessage(msg, userId, session, env) {
-  if (!session) return showMenu(userId, env);
+  if (!session) return showMenu(userId, null, env);
 
-  // Поток edit: ввод нового значения поля.
+  // Поток edit: ввод нового текстового значения поля.
   if (session.flow === 'edit' && session.step && session.step.startsWith('editval:')) {
     const field = session.step.slice('editval:'.length);
     const v = validateField(field, msg.text);
     if (!v.ok) return sendMessage(userId, `❌ ${v.error}`, env);
     await patchPerfume(session.target_id, field, v.value, env);
-    await clearSession(userId, env);
-    return sendMessage(userId, `✅ ${field} обновлено`, env, { reply_markup: mainMenuKeyboard() });
+    await saveSession(userId, { step: 'pick_field' }, env);
+    const all = await selectPerfumes(env);
+    const row = all.find((p) => p.id === session.target_id) || {};
+    // Ответ — новое сообщение (юзер только что написал), меню рисуем заново.
+    return showCustom(userId, { ...session, menu_message_id: null, menu_is_photo: false },
+      '✅ обновлено\nЧто изменить ещё?', editFieldsKeyboard(session.target_id, row), env);
+  }
+
+  // Поток edit: загрузка фото к существующему аромату.
+  if (session.flow === 'edit' && session.step === 'editphoto' && msg.photo) {
+    const fileId = msg.photo[msg.photo.length - 1].file_id;
+    const all = await selectPerfumes(env);
+    const row = all.find((p) => p.id === session.target_id) || {};
+    const existing = typeof row.images === 'string' && row.images ? row.images.split(',').map((s) => s.trim()) : [];
+    const url = await downloadAndStorePhoto(fileId, { brand: row.brand, name: row.name, images: existing }, env);
+    const images = [...existing, url];
+    await patchPerfume(session.target_id, 'images', images.join(', '), env);
+    return sendMessage(userId, `Фото добавлено (${images.length}). Ещё или «Готово».`, env, {
+      reply_markup: { inline_keyboard: [[{ text: '✅ Готово', callback_data: `editmenu:${session.target_id}` }]] },
+    });
   }
 
   // Поток add.
@@ -477,7 +763,7 @@ async function handleMessage(msg, userId, session, env) {
     return stepAdd(userId, session, msg.text, env);
   }
 
-  return showMenu(userId, env);
+  return showMenu(userId, null, env);
 }
 
 /** Обработать значение текущего шага add и спросить следующий. */
@@ -502,7 +788,7 @@ async function stepAdd(userId, session, rawValue, env) {
     return sendMessage(userId, `Проверьте:\n\n${renderCard(row)}`, env, {
       reply_markup: { inline_keyboard: [[
         { text: '✅ Сохранить', callback_data: 'confirm:save' },
-        { text: '✖️ Отмена', callback_data: 'noop' },
+        { text: '✖️ Отмена', callback_data: 'm:menu' },
       ]] },
     });
   }
