@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react';
 import { readOrders, Order } from '@/lib/orderHistory';
 import { pluralizeRu, POSITION_FORMS } from '@/lib/plural';
+import { whenStorageReady } from '@/lib/storage';
 
 const STATUS_LABELS: Record<string, string> = {
   new: 'Новый',
@@ -18,9 +19,20 @@ export default function OrderHistory() {
   const [openId, setOpenId] = useState<number | null>(null);
 
   useEffect(() => {
-    const initData =
-      typeof window !== 'undefined' ? window.Telegram?.WebApp?.initData ?? '' : '';
-    readOrders(initData).then(setOrders);
+    let alive = true;
+    (async () => {
+      // Ждём готовности SDK: initData появляется только после загрузки
+      // telegram-web-app.js. Раннее чтение даёт пустую строку → пустой список.
+      await whenStorageReady();
+      if (!alive) return;
+      const initData =
+        typeof window !== 'undefined' ? window.Telegram?.WebApp?.initData ?? '' : '';
+      const result = await readOrders(initData);
+      if (alive) setOrders(result);
+    })();
+    return () => {
+      alive = false;
+    };
   }, []);
 
   if (orders === null) {

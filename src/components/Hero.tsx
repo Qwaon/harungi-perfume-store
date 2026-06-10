@@ -49,7 +49,7 @@ export default function Hero() {
         </motion.div>
 
         <motion.div
-          className="flex gap-8 sm:gap-12 border-t border-white/10 pt-8"
+          className="flex flex-wrap gap-x-6 gap-y-5 sm:gap-12 border-t border-white/10 pt-8"
           variants={fadeUp}
           initial="hidden"
           animate="show"
@@ -61,8 +61,8 @@ export default function Hero() {
             { value: 'от 5 мл', label: 'Распивы' },
             { value: '100%', label: 'Оригинал' },
           ].map((stat) => (
-            <div key={stat.label}>
-              <p className="font-display text-3xl sm:text-4xl font-light text-white tabular-nums">{stat.value}</p>
+            <div key={stat.label} className="whitespace-nowrap">
+              <p className="font-display text-2xl sm:text-4xl font-light text-white tabular-nums">{stat.value}</p>
               <p className="label text-cream-300/40 mt-1">{stat.label}</p>
             </div>
           ))}

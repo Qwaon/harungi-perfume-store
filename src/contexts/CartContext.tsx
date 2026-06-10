@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { CartItem } from '@/types';
 import { lockScroll, unlockScroll } from '@/lib/scrollLock';
-import { storageGet, storageSet, isCloudStorage } from '@/lib/storage';
+import { storageGet, storageSet, isCloudStorage, whenStorageReady } from '@/lib/storage';
 
 const MAX_QUANTITY = 99;
 const CART_KEY = 'cart';
@@ -56,6 +56,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     (async () => {
       try {
+        // Ждём готовности Telegram SDK: иначе бэкенд выберется как localStorage
+        // (SDK ещё не загрузился), а запись уйдёт в CloudStorage — корзина теряется.
+        await whenStorageReady();
         // одноразовая миграция localStorage -> CloudStorage
         if (isCloudStorage() && !localStorage.getItem(CART_MIGRATED_FLAG)) {
           const legacy = localStorage.getItem(LEGACY_CART_KEY);

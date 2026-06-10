@@ -27,7 +27,7 @@ export interface TelegramWebApp {
   expand(): void;
   setHeaderColor(color: string): void;
   CloudStorage: TelegramCloudStorage;
-  BackButton: {
+  BackButton?: {
     show(): void;
     hide(): void;
     onClick(cb: () => void): void;

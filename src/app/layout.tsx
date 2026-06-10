@@ -9,6 +9,7 @@ import PageTransition from '@/components/PageTransition';
 import MotionProvider from '@/components/MotionProvider';
 import TelegramProvider from '@/components/TelegramProvider';
 import TelegramShell from '@/components/TelegramShell';
+import TelegramBackButton from '@/components/TelegramBackButton';
 import { FavoritesProvider } from '@/contexts/FavoritesContext';
 
 export const viewport: Viewport = {
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <CartProvider>
           <FavoritesProvider>
             <TelegramShell />
+            <TelegramBackButton />
             <a
               href="#main-content"
               className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:bg-ink-900 focus:text-cream-50 focus:px-4 focus:py-2 focus:rounded-full focus:text-sm"

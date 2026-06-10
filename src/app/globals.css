@@ -201,13 +201,17 @@ input[type='range']::-webkit-slider-thumb:hover {
   box-shadow: 0 0 0 100vmax #e8e6dc;
   clip-path: inset(0 -100vmax);
 }
-/* Фиксированные панели (Header, BottomNav, CTA товара) — в ту же колонку */
+/* Фиксированные панели (Header, BottomNav, CTA товара) — в ту же колонку.
+   Центрируем через left/right:0 + margin:auto, а НЕ transform: Header — это
+   <motion.header>, у которого Framer Motion пишет inline transform (translateY),
+   и он перебивал бы translateX(-50%) → панель уезжала вправо (белая плашка
+   шапки поверх контента). margin-auto с transform не конфликтует. */
 .tg-app header.fixed,
 .tg-app nav.fixed,
 .tg-app .fixed.left-0.right-0 {
-  left: 50% !important;
-  right: auto !important;
-  transform: translateX(-50%);
+  left: 0 !important;
+  right: 0 !important;
+  margin-inline: auto !important;
   width: 100%;
   max-width: var(--tg-w);
 }
@@ -234,3 +238,35 @@ input[type='range']::-webkit-slider-thumb:hover {
 .tg-app .lg\:grid-cols-2 {
   grid-template-columns: minmax(0, 1fr) !important;
 }
+
+/* 6) TrustStrip: в Telegram Desktop окно широкое → sm:flex активен и даёт
+   рваные ряды. Форсим ровную сетку 2×2 (мобильный вид). */
+.tg-app .trust-strip {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  justify-items: start;
+}
+
+/* 7) Footer: окно широкое → md:grid-cols-3 раскладывает колонки в ряд и режет
+   их колонкой 480px (Telegram-ник/кнопка уезжают, вид несимметричный). Форсим
+   одну колонку, как на мобиле. */
+.tg-app footer .md\:grid-cols-3 {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+.tg-app footer .md\:flex-row {
+  flex-direction: column !important;
+}
+
+/* 8) QuickAddSheet: в Telegram Desktop (широкое окно) min-width:768px-медиа
+   делает плавающую карточку справа («плашка как для ПК»). Возвращаем мобильный
+   bottom-sheet, прижатый к колонке 480px над BottomNav. */
+.tg-app .quick-add-sheet {
+  left: 0 !important;
+  right: 0 !important;
+  margin-inline: auto !important;
+  max-width: var(--tg-w) !important;
+  bottom: calc(56px + env(safe-area-inset-bottom, 0px)) !important;
+  border-radius: 1rem 1rem 0 0 !important; /* rounded-t-2xl */
+}
+/* Возвращаем мобильный «хват» (md:hidden скрывал его на широком окне) */
+.tg-app .quick-add-sheet .md\:hidden { display: block !important; }

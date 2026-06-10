@@ -2,7 +2,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
-import { storageGet, storageSet, isCloudStorage } from '@/lib/storage';
+import { storageGet, storageSet, isCloudStorage, whenStorageReady } from '@/lib/storage';
 
 const KEY = 'favorites';
 const LEGACY_KEY = 'parfum_favorites';
@@ -25,6 +25,9 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     (async () => {
       try {
+        // Ждём готовности Telegram SDK (см. CartContext): иначе избранное читается
+        // из пустого localStorage, а пишется в CloudStorage — и теряется.
+        await whenStorageReady();
         // одноразовая миграция из localStorage в CloudStorage
         if (isCloudStorage() && !localStorage.getItem(MIGRATED_FLAG)) {
           const legacy = localStorage.getItem(LEGACY_KEY);

@@ -40,10 +40,12 @@ const TRUST_ITEMS = [
 export default function TrustStrip() {
   return (
     <div className="bg-cream-100 border-t border-cream-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-wrap items-center justify-center gap-x-8 gap-y-2">
+      {/* На узких экранах — ровная сетка 2×2 (иначе flex-wrap даёт рваные,
+          по-разному центрированные ряды). С sm — единый ряд по центру. */}
+      <div className="trust-strip max-w-7xl mx-auto px-4 sm:px-6 py-4 grid grid-cols-2 gap-x-6 gap-y-3 sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-x-8 sm:gap-y-2">
         {TRUST_ITEMS.map((item) => (
           <span key={item.label} className="flex items-center gap-2 text-xs text-ink-500 tracking-wide">
-            <span className="text-gold-500">{item.icon}</span>
+            <span className="text-gold-500 shrink-0">{item.icon}</span>
             {item.label}
           </span>
         ))}
