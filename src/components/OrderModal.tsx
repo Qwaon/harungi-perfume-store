@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { OrderPayload, Volume } from '@/types';
 import { lockScroll, unlockScroll } from '@/lib/scrollLock';
 import { trackEvent } from '@/lib/analytics';
-import { appendOrder } from '@/lib/orderHistory';
 import { useTelegram } from '@/contexts/TelegramContext';
 import { TELEGRAM_URL } from '@/lib/constants';
 import {
@@ -172,16 +171,10 @@ export default function OrderModal({ isOpen, onClose, perfumeName, perfumeId, br
       if (result.ok) {
         window.localStorage.setItem(LAST_SUBMIT_KEY, String(Date.now()));
         trackEvent('order_submit', { perfumeId, volume, price });
-        if (isTelegram) {
-          appendOrder({ items: [[perfumeId, volume, 1, price]], total: price, type: 'order' });
-        }
         setOrderNumber(result.orderNumber);
         setStatus('success');
       } else {
         trackEvent('order_fallback', { perfumeId, volume });
-        if (isTelegram) {
-          appendOrder({ items: [[perfumeId, volume, 1, price]], total: price, type: 'order' });
-        }
         openFallback(payload);
         setOrderNumber(null);
         setStatus('success');

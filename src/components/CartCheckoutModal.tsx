@@ -7,7 +7,6 @@ import { lockScroll, unlockScroll } from '@/lib/scrollLock';
 import { trackEvent } from '@/lib/analytics';
 import { TELEGRAM_URL } from '@/lib/constants';
 import { pluralizeRu, POSITION_FORMS } from '@/lib/plural';
-import { appendOrder } from '@/lib/orderHistory';
 import { useTelegram } from '@/contexts/TelegramContext';
 import {
   MIN_NAME_LENGTH,
@@ -177,13 +176,6 @@ export default function CartCheckoutModal({
       if (sent) {
         window.localStorage.setItem(LAST_SUBMIT_KEY, String(Date.now()));
         trackEvent('order_submit', { itemCount: items.length, total });
-        if (isTelegram) {
-          appendOrder({
-            items: items.map((i) => [i.perfumeId, i.volume, i.quantity, i.price]),
-            total,
-            type: 'cart-order',
-          });
-        }
         setOrderNumber(receivedOrderNumber);
         setStatus('success');
         onSuccess();
@@ -191,13 +183,6 @@ export default function CartCheckoutModal({
         const fallbackText = buildFallbackText(items, total, trimmedName, trimmedContact);
         window.open(`${TELEGRAM_URL}?text=${encodeURIComponent(fallbackText)}`, '_blank');
         trackEvent('order_fallback', { itemCount: items.length });
-        if (isTelegram) {
-          appendOrder({
-            items: items.map((i) => [i.perfumeId, i.volume, i.quantity, i.price]),
-            total,
-            type: 'cart-order',
-          });
-        }
         setOrderNumber(null);
         setStatus('success');
         onSuccess();
