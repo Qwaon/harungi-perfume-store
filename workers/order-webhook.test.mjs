@@ -55,6 +55,20 @@ test('buildOrderRows: заказ-корзина с количеством', () =
   assert.equal(items[1].price, 300);
 });
 
+test('buildOrderRows: verifiedUserId перекрывает payload.tgUserId', () => {
+  const payload = {
+    name: 'Пётр', contact: '@p', type: 'single',
+    perfumeId: 'a', perfumeName: 'A', brand: 'Br', volume: '5ml', volumeLabel: '5 мл', price: 100,
+    source: 'tg', pageUrl: 'https://x', tgUserId: '111',
+  };
+  // initData дала проверенный id 999 — он и должен попасть в заказ.
+  assert.equal(buildOrderRows(payload, 999).order.tg_user_id, 999);
+  // без verifiedUserId — фолбэк на payload.tgUserId.
+  assert.equal(buildOrderRows(payload).order.tg_user_id, 111);
+  // verifiedUserId есть, а payload.tgUserId пуст (Telegram Desktop) — берём проверенный.
+  assert.equal(buildOrderRows({ ...payload, tgUserId: undefined }, 999).order.tg_user_id, 999);
+});
+
 test('buildOrderRows: консультация → type consultation', () => {
   const payload = {
     name: 'Анна', contact: '@anna', type: 'consultation', messageType: 'consultation',

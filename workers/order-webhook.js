@@ -21,10 +21,15 @@ export function parseStatusCallback(data) {
  * payload (single/cart/consultation) → { order, items }.
  * order — строка для таблицы orders; items — массив строк order_items (снимок).
  */
-export function buildOrderRows(payload) {
+export function buildOrderRows(payload, verifiedUserId = null) {
   const isCart = Array.isArray(payload.items);
-  const tgUserId = payload.tgUserId != null && payload.tgUserId !== ''
+  // tg_user_id берём из подписанной initData (verifiedUserId), если она прошла
+  // проверку — это тот же источник, что и /history. Клиентский payload.tgUserId
+  // (из initDataUnsafe) — лишь фолбэк: на части клиентов (Telegram Desktop) он
+  // бывает пуст, и тогда заказ не привязывался к юзеру и не виден в профиле.
+  const fallbackId = payload.tgUserId != null && payload.tgUserId !== ''
     ? Number(payload.tgUserId) : null;
+  const tgUserId = verifiedUserId != null ? Number(verifiedUserId) : fallbackId;
 
   let items;
   let total;
@@ -129,7 +134,14 @@ function sbHeaders(env) {
 async function createSupabaseOrder(payload, env) {
   if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_KEY) return null;
   try {
-    const { order, items } = buildOrderRows(payload);
+    // Если пришла подписанная initData — берём tg_user_id из неё (надёжный
+    // источник, совпадает с тем, по чему ищет /history). Иначе — payload.tgUserId.
+    let verifiedUserId = null;
+    if (payload.initData) {
+      const v = await verifyInitData(payload.initData, env.TELEGRAM_BOT_TOKEN);
+      if (v.ok) verifiedUserId = v.userId;
+    }
+    const { order, items } = buildOrderRows(payload, verifiedUserId);
     const res = await fetch(`${env.SUPABASE_URL}/rest/v1/orders`, {
       method: 'POST',
       headers: { ...sbHeaders(env), Prefer: 'return=representation' },

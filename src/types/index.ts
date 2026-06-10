@@ -71,6 +71,8 @@ export interface OrderPayload {
   type: 'single' | 'consultation';
   // Telegram user id (только при заказе из Mini App), для будущей привязки.
   tgUserId?: string;
+  // Подписанная Telegram initData: Worker берёт tg_user_id из неё (надёжнее tgUserId).
+  initData?: string;
 }
 
 export interface CartOrderPayload {
@@ -85,6 +87,8 @@ export interface CartOrderPayload {
   messageType: 'cart-order';
   type: 'cart';
   tgUserId?: string;
+  // Подписанная Telegram initData: Worker берёт tg_user_id из неё (надёжнее tgUserId).
+  initData?: string;
 }
 
 // Ответ Worker'а на POST / — orderNumber может быть null, если Airtable недоступен.

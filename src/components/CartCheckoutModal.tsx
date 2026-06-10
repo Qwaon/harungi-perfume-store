@@ -152,6 +152,9 @@ export default function CartCheckoutModal({
       messageType: 'cart-order',
       type: 'cart',
       tgUserId: user?.id != null ? String(user.id) : undefined,
+      // Подписанная initData — Worker возьмёт tg_user_id из неё (надёжнее
+      // initDataUnsafe, который на части клиентов пуст → заказ не виден в профиле).
+      initData: typeof window !== 'undefined' ? window.Telegram?.WebApp?.initData : undefined,
     };
 
     setStatus('loading');

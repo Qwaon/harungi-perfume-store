@@ -160,6 +160,8 @@ export default function OrderModal({ isOpen, onClose, perfumeName, perfumeId, br
       messageType: 'order',
       type: 'single',
       tgUserId: user?.id != null ? String(user.id) : undefined,
+      // Подписанная initData — Worker берёт tg_user_id из неё (см. CartCheckoutModal).
+      initData: typeof window !== 'undefined' ? window.Telegram?.WebApp?.initData : undefined,
     };
 
     setStatus('loading');
