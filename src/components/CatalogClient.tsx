@@ -77,8 +77,13 @@ export default function CatalogClient({ perfumes, brands }: Props) {
     Object.values(filters).filter(Boolean).length + (priceActive ? 1 : 0);
 
   const filtered = useMemo(() => {
-    const minVal = priceMin ? parseInt(priceMin) : 0;
-    const maxVal = priceMax ? parseInt(priceMax) : Infinity;
+    // Безопасный парс границ цены: битый/частичный ввод (NaN) трактуем как
+    // «граница не задана», а не как молча неработающий фильтр (NaN-сравнения
+    // дают false и фильтр тихо игнорируется при активном чипе).
+    const parsedMin = parseInt(priceMin, 10);
+    const parsedMax = parseInt(priceMax, 10);
+    const minVal = Number.isFinite(parsedMin) && parsedMin > 0 ? parsedMin : 0;
+    const maxVal = Number.isFinite(parsedMax) && parsedMax > 0 ? parsedMax : Infinity;
     let result = perfumes.filter((p) => {
       if (filters.brand && p.brand !== filters.brand) return false;
       if (filters.gender && p.gender !== filters.gender) return false;
