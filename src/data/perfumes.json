@@ -30,11 +30,11 @@
   },
   {
     "id": "dior-sauvage",
-    "name": "Supercalifragilisticexpialidocious Eau de Parfum Intense Edition",
-    "brand": "MaisonFrancisKurkdjianParfumeurExtraordinaire",
+    "name": "Sauvage",
+    "brand": "Christian Dior",
     "description": "Бергамот и перец на открытом воздухе — резкий, свободный, без компромиссов. Один из самых узнаваемых силуэтов в современной парфюмерии.",
     "notes": {
-      "top": ["Pamplemousserosebergamoted#italiebrute"],
+      "top": [],
       "middle": [],
       "base": []
     },
@@ -89,7 +89,7 @@
       "5ml",
       "10ml"
     ],
-    "inStock": false,
+    "inStock": true,
     "featured": true,
     "newArrival": true,
     "bestseller": true

@@ -1,54 +1,62 @@
 // src/data/catalog.ts
-// Server-only модуль: использует AIRTABLE_API_KEY (без NEXT_PUBLIC_), который Next
-// никогда не передаёт в клиентский бандл. Импортировать ТОЛЬКО из server components
-// (не из 'use client'-файлов), иначе сборка упадёт на доступе к серверному env.
+// Server-only модуль: использует SUPABASE_URL / SUPABASE_KEY (без NEXT_PUBLIC_),
+// которые Next никогда не передаёт в клиентский бандл. Импортировать ТОЛЬКО из
+// server components (не из 'use client'-файлов), иначе сборка упадёт на доступе
+// к серверному env.
+//
+// Источник правды — таблица `perfumes` в Supabase (этап 1 миграции). Читается
+// через Supabase REST с ISR (revalidate=60). Фолбэка на perfumes.json больше нет:
+// при сбое фетча getPerfumes() бросает ошибку, и Next отдаёт последний удачный
+// ISR-кеш страницы вместо пустого каталога (мягкая деградация). perfumes.json
+// остаётся только синхронным фолбэком для клиентского account/* (см. perfumes.ts).
 import type { Perfume } from '@/types';
 import type { BasePerfume } from './utils';
 import { enrichPerfume, buildBrandEntries, getPerfumesByBrandSlug as bySlug } from './utils';
-import { transformRecord, type AirtableRecord } from './transform';
-import rawData from './perfumes.json';
+import { transformRow, type SupabaseRow } from './transform';
 
-const API_KEY = process.env.AIRTABLE_API_KEY;
-const BASE_ID = process.env.AIRTABLE_BASE_ID;
-const TABLE_NAME = process.env.AIRTABLE_TABLE_NAME || 'Catalog';
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_KEY;
+const TABLE = 'perfumes';
 const REVALIDATE_SECONDS = 60;
 
-/** Фолбэк: встроенный JSON, обогащённый и отфильтрованный по inStock. */
-function fallbackPerfumes(): Perfume[] {
-  return (rawData as BasePerfume[]).map(enrichPerfume).filter((p) => p.inStock);
+async function fetchSupabaseRows(): Promise<SupabaseRow[]> {
+  // Env заведомо есть — проверка вынесена в getPerfumes() (см. ниже).
+  const url = `${SUPABASE_URL}/rest/v1/${TABLE}?select=*`;
+  const res = await fetch(url, {
+    headers: {
+      apikey: SUPABASE_KEY as string,
+      Authorization: `Bearer ${SUPABASE_KEY as string}`,
+    },
+    next: { revalidate: REVALIDATE_SECONDS },
+  });
+  if (!res.ok) throw new Error(`Supabase ${res.status}`);
+  return (await res.json()) as SupabaseRow[];
 }
 
-async function fetchAirtableRecords(): Promise<AirtableRecord[]> {
-  const records: AirtableRecord[] = [];
-  let offset: string | undefined;
-  do {
-    const url = new URL(`https://api.airtable.com/v0/${BASE_ID}/${encodeURIComponent(TABLE_NAME)}`);
-    if (offset) url.searchParams.set('offset', offset);
-    const res = await fetch(url.toString(), {
-      headers: { Authorization: `Bearer ${API_KEY}` },
-      next: { revalidate: REVALIDATE_SECONDS },
-    });
-    if (!res.ok) throw new Error(`Airtable ${res.status}`);
-    const data = (await res.json()) as { records: AirtableRecord[]; offset?: string };
-    records.push(...data.records);
-    offset = data.offset;
-  } while (offset);
-  return records;
-}
-
-/** Каталог из Airtable (ISR). При любой ошибке — фолбэк на встроенный JSON. */
+/**
+ * Каталог из Supabase (ISR).
+ *
+ * Два сценария «нет данных» разделены намеренно:
+ * - Env (SUPABASE_URL/KEY) не заданы — это сборка/локалка без настроенного
+ *   Supabase. Возвращаем []: `npm run build` проходит, страницы становятся
+ *   on-demand (dynamicParams=true), наполнятся когда env появится.
+ * - Env есть, но фетч упал (не-200/сеть) — это прод-сбой. Бросаем ошибку,
+ *   чтобы Next отдал последний удачный ISR-кеш страницы (мягкая деградация),
+ *   а не затёр кеш пустым каталогом.
+ */
 export async function getPerfumes(): Promise<Perfume[]> {
-  if (!API_KEY || !BASE_ID) return fallbackPerfumes();
-  try {
-    const records = await fetchAirtableRecords();
-    const base = records
-      .map(transformRecord)
-      .filter((p): p is BasePerfume => p !== null);
-    const enriched = base.map(enrichPerfume).filter((p) => p.inStock);
-    return enriched.length > 0 ? enriched : fallbackPerfumes();
-  } catch {
-    return fallbackPerfumes();
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    if (process.env.NODE_ENV === 'production') {
+      console.warn('[catalog] SUPABASE_URL/SUPABASE_KEY не заданы — каталог пуст');
+    }
+    return [];
   }
+  const rows = await fetchSupabaseRows();
+  return rows
+    .map(transformRow)
+    .filter((p): p is BasePerfume => p !== null)
+    .map(enrichPerfume)
+    .filter((p) => p.inStock);
 }
 
 export async function getBrands(): Promise<string[]> {

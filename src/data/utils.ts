@@ -58,3 +58,14 @@ export function getPerfumesByBrandSlug(perfumes: Perfume[], slug: string): Perfu
   if (!brandName) return [];
   return perfumes.filter((p) => p.brand === brandName);
 }
+
+/**
+ * Lowest valid price across a perfume's volumes, or null when none are set.
+ * Guards against `Math.min(...[])` returning Infinity for price-less products.
+ */
+export function getMinPrice(perfume: Pick<Perfume, 'prices'>): number | null {
+  const values = Object.values(perfume.prices).filter(
+    (p): p is number => typeof p === 'number' && p > 0
+  );
+  return values.length > 0 ? Math.min(...values) : null;
+}
