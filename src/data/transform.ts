@@ -1,6 +1,9 @@
 // src/data/transform.ts
 import type { BasePerfume } from './utils';
-import type { Volume } from '@/types';
+import type { Volume, Season, Occasion } from '@/types';
+
+const SEASON_VALUES: Season[] = ['весна', 'лето', 'осень', 'зима', 'всесезонный'];
+const OCCASION_VALUES: Occasion[] = ['офис', 'вечер', 'ежедневно', 'свидание', 'путешествие'];
 
 /** Строка таблицы Supabase `perfumes` (плоские колонки, имена 1:1 с Airtable). */
 export type SupabaseRow = Record<string, unknown>;
@@ -11,6 +14,13 @@ function parseNotes(val: unknown): string[] {
 
 function parseList(val: unknown): string[] {
   return typeof val === 'string' ? val.split(',').map((s) => s.trim()).filter(Boolean) : [];
+}
+
+/** CSV → массив значений из allowed (мусор отбрасываем). undefined, если пусто. */
+function parseEnumList<T extends string>(val: unknown, allowed: T[]): T[] | undefined {
+  if (typeof val !== 'string') return undefined;
+  const items = val.split(',').map((s) => s.trim()).filter((s): s is T => (allowed as string[]).includes(s));
+  return items.length ? items : undefined;
 }
 
 const VOLUME_KEYS: Volume[] = ['5ml', '10ml', '15ml', '20ml'];
@@ -57,5 +67,8 @@ export function transformRow(row: SupabaseRow): BasePerfume | null {
     featured: Boolean(row.featured),
     newArrival: Boolean(row.newArrival),
     bestseller: Boolean(row.bestseller),
+    // Ручные season/occasion из админ-бота (перекрывают авто-вывод в enrichPerfume).
+    season: parseEnumList(row.season, SEASON_VALUES),
+    occasion: parseEnumList(row.occasion, OCCASION_VALUES),
   };
 }

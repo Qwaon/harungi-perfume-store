@@ -1,6 +1,15 @@
 import type { Perfume, Occasion, Season, Intensity, SourceType } from '@/types';
 
-export type BasePerfume = Omit<Perfume, 'occasion' | 'season' | 'intensity' | 'sourceType' | 'inStock'> & { inStock?: boolean };
+/**
+ * BasePerfume — то, что приходит из БД (без производных полей). `season`/
+ * `occasion` могут быть заданы вручную в админ-боте (CSV-колонки); тогда они
+ * перекрывают авто-вывод. Если их нет — поля undefined и работает деривация.
+ */
+export type BasePerfume = Omit<Perfume, 'occasion' | 'season' | 'intensity' | 'sourceType' | 'inStock'> & {
+  inStock?: boolean;
+  season?: Season[];
+  occasion?: Occasion[];
+};
 
 function deriveOccasion(perfume: BasePerfume): Occasion[] {
   const { scentType, gender } = perfume;
@@ -30,10 +39,13 @@ function deriveIntensity(perfume: BasePerfume): Intensity {
 }
 
 export function enrichPerfume(perfume: BasePerfume): Perfume {
+  // Ручные значения из БД (если заданы в админ-боте) перекрывают авто-вывод.
+  const season = perfume.season && perfume.season.length ? perfume.season : deriveSeason(perfume);
+  const occasion = perfume.occasion && perfume.occasion.length ? perfume.occasion : deriveOccasion(perfume);
   return {
     ...perfume,
-    occasion: deriveOccasion(perfume),
-    season: deriveSeason(perfume),
+    occasion,
+    season,
     intensity: deriveIntensity(perfume),
     inStock: perfume.inStock ?? true,
     sourceType: perfume.format === 'распив' ? 'decant' : 'retail',

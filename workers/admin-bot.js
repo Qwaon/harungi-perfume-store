@@ -59,11 +59,44 @@ export const ENUMS = {
   format: ['оригинал', 'распив'],
 };
 
+// Множественный выбор (season/occasion). В БД — CSV-строка; пусто → null, и сайт
+// авто-выводит значения из scentType/gender (enrichPerfume в src/data/utils.ts).
+export const MULTI_ENUMS = {
+  season: ['весна', 'лето', 'осень', 'зима', 'всесезонный'],
+  occasion: ['офис', 'вечер', 'ежедневно', 'свидание', 'путешествие'],
+};
+
+/** CSV-строка БД ("осень, зима") → массив значений. */
+export function parseCsv(val) {
+  return typeof val === 'string' && val
+    ? val.split(',').map((s) => s.trim()).filter(Boolean)
+    : [];
+}
+
+/**
+ * Клавиатура множественного выбора: чипы с галочкой для выбранных + Готово.
+ * callback: mset:<id>:<field>:<value> (тоггл), mdone:<id>:<field> (сохранить и выйти).
+ */
+export function multiKeyboard(id, field, selected) {
+  const values = MULTI_ENUMS[field] || [];
+  const sel = new Set(selected);
+  const rows = [];
+  for (let i = 0; i < values.length; i += 2) {
+    rows.push(values.slice(i, i + 2).map((v) => ({
+      text: `${sel.has(v) ? '☑' : '☐'} ${v}`,
+      callback_data: `mset:${id}:${field}:${v}`,
+    })));
+  }
+  rows.push([{ text: '✅ Готово', callback_data: `mdone:${id}:${field}` }]);
+  return { inline_keyboard: rows };
+}
+
 const PRICE_STEPS = ['price_5ml', 'price_10ml', 'price_15ml', 'price_20ml', 'price_original', 'original_volume_ml'];
 const REQUIRED_TEXT = ['name', 'brand'];
 
 // --- Поля правки существующего аромата ---
-// kind: 'text' — ввод значения; 'enum' — выбор кнопкой; 'bool' — тумблер сразу.
+// kind: 'text' — ввод значения; 'enum' — выбор кнопкой; 'bool' — тумблер сразу;
+//       'multi' — множественный выбор чипами (season/occasion).
 export const EDIT_FIELDS = [
   { key: 'name', label: 'Название', kind: 'text' },
   { key: 'brand', label: 'Бренд', kind: 'text' },
@@ -77,6 +110,8 @@ export const EDIT_FIELDS = [
   { key: 'gender', label: 'Пол', kind: 'enum' },
   { key: 'scentType', label: 'Тип', kind: 'enum' },
   { key: 'format', label: 'Формат', kind: 'enum' },
+  { key: 'season', label: 'Сезон', kind: 'multi' },
+  { key: 'occasion', label: 'Повод', kind: 'multi' },
   { key: 'notes_top', label: 'Верх. ноты', kind: 'text' },
   { key: 'notes_middle', label: 'Сред. ноты', kind: 'text' },
   { key: 'notes_base', label: 'Базов. ноты', kind: 'text' },
@@ -149,6 +184,8 @@ export function draftToPerfumeRow(draft) {
     gender: draft.gender || null,
     scentType: draft.scentType || null,
     format: draft.format || null,
+    season: csvOrNull(draft.season),
+    occasion: csvOrNull(draft.occasion),
     images: csvOrNull(draft.images),
     price_5ml: numOrNull(draft.price_5ml),
     price_10ml: numOrNull(draft.price_10ml),
@@ -651,9 +688,50 @@ async function handleCallback(cq, userId, session, env) {
       return showCustom(userId, session, `${meta.label} — выберите:`, kb, env);
     }
 
+    if (meta.kind === 'multi') {
+      // Текущий выбор берём из БД (CSV) в draft — дальше тоггл идёт по draft.
+      const all = await selectPerfumes(env);
+      const row = all.find((p) => p.id === id) || {};
+      const selected = parseCsv(row[field]);
+      await saveSession(userId, { step: `editmulti:${field}`, draft: { ...session.draft, [field]: selected } }, env);
+      return showCustom(userId, session,
+        `${meta.label} — отметьте (пусто = авто по типу аромата):`,
+        multiKeyboard(id, field, selected), env);
+    }
+
     // text — просим ввод сообщением
     await saveSession(userId, { step: `editval:${field}` }, env);
     return sendMessage(userId, `Новое значение — ${meta.label}? Отправьте сообщением.`, env);
+  }
+
+  // Тоггл значения в множественном выборе (season/occasion).
+  if (data.startsWith('mset:') && session && session.flow === 'edit') {
+    const [, id, field, value] = data.split(':');
+    if (!MULTI_ENUMS[field]) return;
+    const current = Array.isArray(session.draft && session.draft[field]) ? session.draft[field] : [];
+    const next = current.includes(value)
+      ? current.filter((v) => v !== value)
+      : [...current, value];
+    await saveSession(userId, { draft: { ...session.draft, [field]: next } }, env);
+    const label = EDIT_FIELDS.find((f) => f.key === field)?.label || field;
+    return showCustom(userId, session,
+      `${label} — отметьте (пусто = авто по типу аромата):`,
+      multiKeyboard(id, field, next), env);
+  }
+
+  // Сохранить множественный выбор и вернуться в меню правки.
+  if (data.startsWith('mdone:') && session && session.flow === 'edit') {
+    const [, id, field] = data.split(':');
+    if (!MULTI_ENUMS[field]) return;
+    const selected = Array.isArray(session.draft && session.draft[field]) ? session.draft[field] : [];
+    await patchPerfume(id, field, selected.length ? selected.join(', ') : null, env);
+    await saveSession(userId, { step: 'pick_field' }, env);
+    const all = await selectPerfumes(env);
+    const row = all.find((p) => p.id === id) || {};
+    const label = EDIT_FIELDS.find((f) => f.key === field)?.label || field;
+    const summary = selected.length ? selected.join(', ') : 'авто';
+    return showCustom(userId, session, `✅ ${label}: ${summary}\nЧто изменить ещё?`,
+      editFieldsKeyboard(id, row), env);
   }
 
   if (data.startsWith('eset:') && session && session.flow === 'edit') {
@@ -884,6 +962,8 @@ function renderCard(row) {
     .filter(([key]) => row[key] != null)
     .map(([key, label]) => `${label}: ${row[key]}₽`);
   if (prices.length) lines.push(`Цены: ${prices.join('  ')}`);
+  // season/occasion: показываем ручные значения, иначе «авто».
+  lines.push(`Сезон: ${row.season || 'авто'}  Повод: ${row.occasion || 'авто'}`);
   const flags = ['inStock', 'featured', 'newArrival', 'bestseller'].filter((f) => row[f]);
   if (flags.length) lines.push(`Флаги: ${flags.join(', ')}`);
   const imgCount = (typeof row.images === 'string' && row.images ? row.images.split(',').length : (row.images || []).length);

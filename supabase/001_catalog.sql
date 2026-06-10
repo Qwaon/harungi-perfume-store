@@ -24,8 +24,14 @@ create table if not exists perfumes (
   "inStock"         boolean default true,
   featured          boolean default false,
   "newArrival"      boolean default false,
-  bestseller        boolean default false
+  bestseller        boolean default false,
+  season            text,   -- CSV ручных значений: весна,лето,осень,зима,всесезонный (null → авто-вывод)
+  occasion          text    -- CSV: офис,вечер,ежедневно,свидание,путешествие (null → авто-вывод)
 );
+
+-- Для уже развёрнутых БД (idempotent): добавляем ручные season/occasion.
+alter table perfumes add column if not exists season   text;
+alter table perfumes add column if not exists occasion text;
 
 -- Row Level Security: публичный read-only доступ (для anon-ключа сайта).
 alter table perfumes enable row level security;

@@ -5,6 +5,7 @@ import {
   ADD_STEPS, nextAddStep, advanceAdd,
   isAllowed, parseAllowlist,
   paginate, EDIT_FIELDS, editFieldsKeyboard, buildScreen,
+  parseCsv, multiKeyboard, MULTI_ENUMS,
 } from './admin-bot.js';
 
 test('slugify: латиница → kebab-case', () => {
@@ -75,6 +76,43 @@ test('draftToPerfumeRow: пропущенные поля → null/false', () => 
   assert.equal(row.images, null);
   assert.equal(row.inStock, false);
   assert.equal(row.featured, false);
+  assert.equal(row.season, null);    // не задано → null (сайт авто-выведет)
+  assert.equal(row.occasion, null);
+});
+
+test('draftToPerfumeRow: season/occasion (массивы) → CSV', () => {
+  const row = draftToPerfumeRow({ id: 'x', name: 'X', brand: 'B', season: ['осень', 'зима'], occasion: ['вечер'] });
+  assert.equal(row.season, 'осень, зима');
+  assert.equal(row.occasion, 'вечер');
+});
+
+// --- season/occasion: множественный выбор ---
+
+test('parseCsv: CSV-строка → массив (trim, без пустых)', () => {
+  assert.deepEqual(parseCsv('осень, зима'), ['осень', 'зима']);
+  assert.deepEqual(parseCsv(''), []);
+  assert.deepEqual(parseCsv(null), []);
+});
+
+test('EDIT_FIELDS: season/occasion размечены как multi', () => {
+  const byKey = Object.fromEntries(EDIT_FIELDS.map((f) => [f.key, f.kind]));
+  assert.equal(byKey.season, 'multi');
+  assert.equal(byKey.occasion, 'multi');
+});
+
+test('MULTI_ENUMS: допустимые значения сезона совпадают с типами сайта', () => {
+  assert.deepEqual(MULTI_ENUMS.season, ['весна', 'лето', 'осень', 'зима', 'всесезонный']);
+});
+
+test('multiKeyboard: отмечает выбранные галочкой + кнопка Готово', () => {
+  const kb = multiKeyboard('dior-sauvage', 'season', ['зима']);
+  const flat = kb.inline_keyboard.flat();
+  const winter = flat.find((b) => b.callback_data === 'mset:dior-sauvage:season:зима');
+  const spring = flat.find((b) => b.callback_data === 'mset:dior-sauvage:season:весна');
+  assert.ok(winter.text.includes('☑'));
+  assert.ok(spring.text.includes('☐'));
+  const done = flat.find((b) => b.callback_data === 'mdone:dior-sauvage:season');
+  assert.ok(done, 'нет кнопки Готово');
 });
 
 test('ADD_STEPS: порядок шагов начинается с name', () => {
