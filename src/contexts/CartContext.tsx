@@ -108,7 +108,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const updateQuantity = (perfumeId: string, volume: string, quantity: number) => {
     setItems((prev) => {
-      if (quantity < 1) {
+      // Нечисловой/нефинитный ввод (NaN из пустого инпута и т.п.) — иначе позиция
+      // получила бы quantity:NaN и вся корзина показала бы «NaN ₽». Согласовано
+      // с защитой в addItem/sanitizeStoredItems.
+      if (!Number.isFinite(quantity) || quantity < 1) {
         return prev.filter((i) => !(i.perfumeId === perfumeId && i.volume === volume));
       }
       const clamped = Math.min(Math.floor(quantity), MAX_QUANTITY);
