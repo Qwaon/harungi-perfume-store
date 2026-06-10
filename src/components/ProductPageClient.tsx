@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { trackEvent } from '@/lib/analytics';
 import { TELEGRAM_URL, VOLUME_LABELS } from '@/lib/constants';
@@ -38,7 +38,13 @@ export default function ProductPageClient({ perfume, related }: Props) {
     return VOLUME_LABELS[selectedVolume];
   };
 
+  // Synchronous guard against rapid double/triple-taps adding extra quantity:
+  // openCart() doesn't block same-tick clicks before the drawer renders.
+  const addingRef = useRef(false);
+
   const handleAddToCart = () => {
+    if (addingRef.current) return;
+    addingRef.current = true;
     addItem({
       perfumeId: perfume.id,
       perfumeName: perfume.name,
@@ -49,7 +55,9 @@ export default function ProductPageClient({ perfume, related }: Props) {
       quantity: 1,
       imageUrl: perfume.images[0],
     });
+    trackEvent('add_to_cart', { perfumeId: perfume.id, volume: selectedVolume, price, source: 'product' });
     openCart();
+    setTimeout(() => { addingRef.current = false; }, 600);
   };
 
   return (
@@ -57,12 +65,12 @@ export default function ProductPageClient({ perfume, related }: Props) {
       <div className="min-h-dvh pt-24 md:pt-32 pb-36 md:pb-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 text-xs text-ink-300 mb-6 md:mb-10">
-            <Link href="/" className="hover:text-ink-700 transition-colors">Главная</Link>
-            <span>/</span>
-            <Link href="/catalog" className="hover:text-ink-700 transition-colors">Каталог</Link>
-            <span>/</span>
-            <span className="text-ink-700">{perfume.name}</span>
+          <nav className="flex items-center gap-2 text-xs text-ink-300 mb-6 md:mb-10 min-w-0">
+            <Link href="/" className="hover:text-ink-700 transition-colors shrink-0">Главная</Link>
+            <span className="shrink-0">/</span>
+            <Link href="/catalog" className="hover:text-ink-700 transition-colors shrink-0">Каталог</Link>
+            <span className="shrink-0">/</span>
+            <span className="text-ink-700 truncate min-w-0">{perfume.name}</span>
           </nav>
 
           {/* Product layout */}
@@ -102,8 +110,8 @@ export default function ProductPageClient({ perfume, related }: Props) {
                     </span>
                   )}
                 </div>
-                <div className="flex items-start justify-between gap-3 mb-4">
-                  <h1 className="font-display text-4xl md:text-5xl font-light text-ink-900 leading-tight">
+                <div className="flex items-start justify-between gap-3 mb-4 min-w-0">
+                  <h1 className="font-display text-4xl md:text-5xl font-light text-ink-900 leading-tight min-w-0 break-words">
                     {perfume.name}
                   </h1>
                   <button
@@ -204,7 +212,7 @@ export default function ProductPageClient({ perfume, related }: Props) {
                           <p className="label text-ink-300 mb-3">{label}</p>
                           <ul className="flex flex-col gap-1">
                             {notes.map((note) => (
-                              <li key={note} className="text-sm text-ink-700">
+                              <li key={note} className="text-sm text-ink-700 break-words">
                                 {note}
                               </li>
                             ))}

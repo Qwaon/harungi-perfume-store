@@ -14,6 +14,12 @@ export default function ImageGallery({ images, name }: Props) {
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
 
+  // No images → render a plain placeholder box instead of crashing next/image
+  // with an undefined src.
+  if (images.length === 0) {
+    return <div className="bg-cream-200 aspect-square rounded-xl" aria-label={name} role="img" />;
+  }
+
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStartX(e.touches[0].clientX);
     setTouchStartY(e.touches[0].clientY);
@@ -93,7 +99,7 @@ export default function ImageGallery({ images, name }: Props) {
                 onClick={() => setActive(i)}
                 aria-label={`Перейти к фото ${i + 1}`}
                 aria-current={i === active ? 'true' : undefined}
-                className="w-7 h-9 flex items-center justify-center"
+                className="w-9 h-11 flex items-center justify-center"
               >
                 <span
                   className={`block w-1.5 h-1.5 rounded-full bg-ink-900 transition-[opacity,transform] duration-200 ease-out ${

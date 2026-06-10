@@ -10,6 +10,10 @@ interface Props {
 }
 
 export default function FeaturedPerfumes({ perfumes }: Props) {
+  // No featured products → hide the section entirely so the home page doesn't
+  // show an orphaned "Популярное" heading above an empty grid.
+  if (perfumes.length === 0) return null;
+
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16 md:py-24">
       <div className="flex items-baseline justify-between mb-10">

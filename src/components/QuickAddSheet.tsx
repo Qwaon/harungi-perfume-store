@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Perfume, Volume, CartItem } from '@/types';
 import { lockScroll, unlockScroll } from '@/lib/scrollLock';
 import { VOLUME_LABELS } from '@/lib/constants';
 import { useCart } from '@/contexts/CartContext';
+import { trackEvent } from '@/lib/analytics';
 
 interface Props {
   perfume: Perfume | null;
@@ -16,10 +17,18 @@ export default function QuickAddSheet({ perfume, onClose }: Props) {
   const { addItem } = useCart();
   const [selected, setSelected] = useState<Volume | null>(null);
   const [added, setAdded] = useState(false);
+  // Synchronous guard against rapid double/triple-taps: the `added` state
+  // disables the button, but React hasn't re-rendered between same-tick clicks,
+  // so a fast multi-tap would call addItem multiple times. This ref blocks it.
+  const addingRef = useRef(false);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    setSelected(null);
+    // Pre-select the first available volume (like the product page) so the
+    // "Добавить" CTA is immediately actionable instead of starting disabled.
+    setSelected(perfume?.availableVolumes[0] ?? null);
     setAdded(false);
+    addingRef.current = false;
   }, [perfume?.id]);
 
   useEffect(() => {
@@ -27,16 +36,20 @@ export default function QuickAddSheet({ perfume, onClose }: Props) {
     lockScroll();
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', onKey);
+    // Move focus into the sheet on open (keyboard/SR users land inside it).
+    const t = setTimeout(() => closeBtnRef.current?.focus(), 50);
     return () => {
       document.removeEventListener('keydown', onKey);
       unlockScroll();
+      clearTimeout(t);
     };
   }, [perfume, onClose]);
 
   const handleAdd = () => {
-    if (!selected || !perfume) return;
+    if (!selected || !perfume || addingRef.current) return;
     const price = perfume.prices[selected];
     if (price === undefined) return;
+    addingRef.current = true;
     const item: CartItem = {
       perfumeId: perfume.id,
       perfumeName: perfume.name,
@@ -48,10 +61,12 @@ export default function QuickAddSheet({ perfume, onClose }: Props) {
       imageUrl: perfume.images[0],
     };
     addItem(item);
+    trackEvent('add_to_cart', { perfumeId: perfume.id, volume: selected, price, source: 'quick_add' });
     setAdded(true);
     setTimeout(() => {
       setAdded(false);
       setSelected(null);
+      addingRef.current = false;
       onClose();
     }, 900);
   };
@@ -91,6 +106,7 @@ export default function QuickAddSheet({ perfume, onClose }: Props) {
                 <h3 className="font-display text-xl font-light text-ink-900">{perfume.name}</h3>
               </div>
               <button
+                ref={closeBtnRef}
                 onClick={onClose}
                 className="w-11 h-11 rounded-full bg-cream-100 flex items-center justify-center hover:bg-cream-200 transition-colors shrink-0 ml-4"
                 aria-label="Закрыть"
@@ -111,7 +127,7 @@ export default function QuickAddSheet({ perfume, onClose }: Props) {
                   <button
                     key={vol}
                     onClick={() => setSelected(vol)}
-                    className={`px-4 py-2.5 rounded-xl border text-sm transition-all duration-150 ${
+                    className={`px-4 py-3 rounded-xl border text-sm transition-all duration-150 ${
                       active
                         ? 'bg-ink-900 text-white border-ink-900'
                         : 'bg-cream-50 text-ink-700 border-cream-200 hover:border-ink-500'

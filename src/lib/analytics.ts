@@ -17,6 +17,7 @@ export type EventName =
   | 'cta_click'
   | 'product_view'
   | 'volume_select'
+  | 'add_to_cart'
   | 'order_open'
   | 'order_submit'
   | 'order_fallback'

@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getPerfumes } from '@/data/catalog';
+import { getMinPrice } from '@/data/utils';
 import ProductPageClient from '@/components/ProductPageClient';
 
 export const revalidate = 60;
@@ -19,13 +20,15 @@ export async function generateMetadata({ params }: Props) {
   const perfumes = await getPerfumes();
   const perfume = perfumes.find((p) => p.id === id);
   if (!perfume) return {};
-  const minPrice = Math.min(...Object.values(perfume.prices));
+  const minPrice = getMinPrice(perfume);
+  const priceSuffix = minPrice !== null ? ` От ${minPrice.toLocaleString('ru-RU')} ₽.` : '';
+  const ogPriceSuffix = minPrice !== null ? ` от ${minPrice.toLocaleString('ru-RU')} ₽.` : '.';
   return {
     title: `${perfume.name} — ${perfume.brand}`,
-    description: `${perfume.description} От ${minPrice.toLocaleString('ru-RU')} ₽.`,
+    description: `${perfume.description}${priceSuffix}`,
     openGraph: {
       title: `${perfume.name} — ${perfume.brand} | HARUNGI`,
-      description: `${perfume.brand} ${perfume.name}. ${perfume.format === 'распив' ? 'Распивы' : 'Оригинал'} от ${minPrice.toLocaleString('ru-RU')} ₽.`,
+      description: `${perfume.brand} ${perfume.name}. ${perfume.format === 'распив' ? 'Распивы' : 'Оригинал'}${ogPriceSuffix}`,
       images: perfume.images[0] ? [{ url: perfume.images[0], width: 800, height: 800, alt: perfume.name }] : [],
     },
   };

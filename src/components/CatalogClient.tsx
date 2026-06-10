@@ -9,6 +9,8 @@ import QuickAddSheet from './QuickAddSheet';
 import { Perfume, FilterState } from '@/types';
 import { genders, scentTypes, formats } from '@/data/perfumes';
 import { pluralizeRu, POSITION_FORMS } from '@/lib/plural';
+import { trackEvent } from '@/lib/analytics';
+import { getMinPrice } from '@/data/utils';
 
 interface Props {
   perfumes: Perfume[];
@@ -55,7 +57,12 @@ export default function CatalogClient({ perfumes, brands }: Props) {
   const [quickAddPerfume, setQuickAddPerfume] = useState<Perfume | null>(null);
 
   const setFilter = (key: keyof FilterState, value: string) =>
-    setFilters((prev) => ({ ...prev, [key]: prev[key] === value ? '' : value }));
+    setFilters((prev) => {
+      const next = prev[key] === value ? '' : value;
+      // Track only when applying a filter (not when clearing it).
+      if (next) trackEvent('catalog_filter', { type: key, value: next });
+      return { ...prev, [key]: next };
+    });
 
   const clearAll = () => {
     setFilters(EMPTY_FILTERS);
@@ -79,9 +86,10 @@ export default function CatalogClient({ perfumes, brands }: Props) {
       if (filters.format && p.format !== filters.format) return false;
       if (filters.season && !p.season.includes(filters.season as never)) return false;
       if (filters.intensity && p.intensity !== filters.intensity) return false;
-      const minP = Math.min(...Object.values(p.prices));
-      if (minVal > 0 && minP < minVal) return false;
-      if (maxVal < Infinity && minP > maxVal) return false;
+      const minP = getMinPrice(p);
+      if (priceActive && minP === null) return false; // price-less products can't match a price range
+      if (minP !== null && minVal > 0 && minP < minVal) return false;
+      if (minP !== null && maxVal < Infinity && minP > maxVal) return false;
       if (search) {
         const q = search.toLowerCase();
         if (!p.name.toLowerCase().includes(q) && !p.brand.toLowerCase().includes(q)) return false;
@@ -89,13 +97,21 @@ export default function CatalogClient({ perfumes, brands }: Props) {
       return true;
     });
     if (sort === 'popular') result = [...result].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
-    if (sort === 'price_asc') result = [...result].sort((a, b) => Math.min(...Object.values(a.prices)) - Math.min(...Object.values(b.prices)));
-    if (sort === 'price_desc') result = [...result].sort((a, b) => Math.min(...Object.values(b.prices)) - Math.min(...Object.values(a.prices)));
+    if (sort === 'price_asc') result = [...result].sort((a, b) => (getMinPrice(a) ?? Infinity) - (getMinPrice(b) ?? Infinity));
+    if (sort === 'price_desc') result = [...result].sort((a, b) => (getMinPrice(b) ?? -Infinity) - (getMinPrice(a) ?? -Infinity));
     if (sort === 'new') result = [...result].sort((a, b) => (b.newArrival ? 1 : 0) - (a.newArrival ? 1 : 0));
     return result;
   }, [perfumes, filters, search, sort, priceMin, priceMax]);
 
   useEffect(() => { setCurrentPage(1); }, [filters, search, sort, priceMin, priceMax]);
+
+  // Track search queries (debounced) so we don't fire on every keystroke.
+  useEffect(() => {
+    const q = search.trim();
+    if (!q) return;
+    const t = setTimeout(() => trackEvent('catalog_search', { query: q }), 700);
+    return () => clearTimeout(t);
+  }, [search]);
 
   const closeMore = useCallback(() => setMoreOpen(false), []);
   useEffect(() => {
@@ -118,7 +134,7 @@ export default function CatalogClient({ perfumes, brands }: Props) {
       {/* Search + sort */}
       <div className="flex gap-3 mb-4">
         <div className="relative flex-1">
-          <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-300" width="15" height="15" viewBox="0 0 16 16" fill="none">
+          <svg aria-hidden="true" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-300" width="15" height="15" viewBox="0 0 16 16" fill="none">
             <circle cx="7" cy="7" r="5" stroke="currentColor" strokeWidth="1.4" />
             <path d="M11 11l3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
           </svg>
@@ -133,7 +149,7 @@ export default function CatalogClient({ perfumes, brands }: Props) {
             <button
               onClick={() => setSearch('')}
               aria-label="Очистить поиск"
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full hover:bg-cream-200 flex items-center justify-center transition-colors"
+              className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full hover:bg-cream-200 flex items-center justify-center transition-colors"
             >
               <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
                 <path d="M1 1l8 8M9 1L1 9" stroke="#5e5d59" strokeWidth="1.4" strokeLinecap="round" />
@@ -195,8 +211,8 @@ export default function CatalogClient({ perfumes, brands }: Props) {
         )}
       </div>
 
-      {/* Results count */}
-      <p className="text-sm text-ink-300 mb-4">{filtered.length} {pluralizeRu(filtered.length, POSITION_FORMS)}</p>
+      {/* Results count — aria-live so screen readers hear the count change as filters/search update */}
+      <p className="text-sm text-ink-300 mb-4" aria-live="polite">{filtered.length} {pluralizeRu(filtered.length, POSITION_FORMS)}</p>
 
       {/* Grid */}
       {filtered.length > 0 ? (
@@ -315,7 +331,7 @@ export default function CatalogClient({ perfumes, brands }: Props) {
                       <button
                         key={b}
                         onClick={() => setFilter('brand', b)}
-                        className={`text-left text-sm py-1.5 px-2 rounded-lg transition-colors ${
+                        className={`text-left text-sm min-h-11 flex items-center px-2 rounded-lg transition-colors ${
                           filters.brand === b ? 'bg-ink-900 text-white' : 'text-ink-700 hover:bg-cream-100'
                         }`}
                       >
@@ -332,13 +348,13 @@ export default function CatalogClient({ perfumes, brands }: Props) {
                     <input
                       type="number" min={0} inputMode="numeric" placeholder="от" value={priceMin}
                       onChange={(e) => setPriceMin(e.target.value)}
-                      className="w-full bg-cream-100 border border-cream-200 rounded-lg px-3 py-2.5 text-sm text-ink-900 placeholder:text-ink-300 focus:outline-none focus:border-ink-700 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      className="w-full bg-cream-100 border border-cream-200 rounded-lg px-3 py-2.5 text-sm text-ink-900 placeholder:text-ink-300 focus:outline-none focus:border-gold-500 focus:shadow-[0_0_0_3px_rgba(92,107,63,0.12)] transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                     <span className="text-ink-300 shrink-0">—</span>
                     <input
                       type="number" min={0} inputMode="numeric" placeholder="до" value={priceMax}
                       onChange={(e) => setPriceMax(e.target.value)}
-                      className="w-full bg-cream-100 border border-cream-200 rounded-lg px-3 py-2.5 text-sm text-ink-900 placeholder:text-ink-300 focus:outline-none focus:border-ink-700 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      className="w-full bg-cream-100 border border-cream-200 rounded-lg px-3 py-2.5 text-sm text-ink-900 placeholder:text-ink-300 focus:outline-none focus:border-gold-500 focus:shadow-[0_0_0_3px_rgba(92,107,63,0.12)] transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                   </div>
                 </div>

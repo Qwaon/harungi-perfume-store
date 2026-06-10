@@ -14,7 +14,8 @@ interface Props {
 }
 
 export default function ProductCard({ perfume, index = 0, onQuickAdd, priority = false }: Props) {
-  const minPrice = Math.min(...Object.values(perfume.prices));
+  const priceValues = Object.values(perfume.prices).filter((p): p is number => typeof p === 'number' && p > 0);
+  const minPrice = priceValues.length > 0 ? Math.min(...priceValues) : null;
   const { isFavorite, toggle } = useFavorites();
   const fav = isFavorite(perfume.id);
 
@@ -27,14 +28,16 @@ export default function ProductCard({ perfume, index = 0, onQuickAdd, priority =
       <div className="group transition-transform duration-300 ease-out hover:-translate-y-1">
         {/* Image */}
         <Link href={`/product/${perfume.id}`} className="block relative overflow-hidden bg-cream-200 aspect-[3/4] rounded-xl mb-3">
-          <Image
-            src={perfume.images[0]}
-            alt={`${perfume.name} — ${perfume.brand}`}
-            fill
-            sizes="(max-width: 768px) 50vw, 25vw"
-            className="object-cover transition-transform duration-700 group-hover:scale-105"
-            priority={priority}
-          />
+          {perfume.images[0] && (
+            <Image
+              src={perfume.images[0]}
+              alt={`${perfume.name} — ${perfume.brand}`}
+              fill
+              sizes="(max-width: 768px) 50vw, 25vw"
+              className="object-cover transition-transform duration-700 group-hover:scale-105"
+              priority={priority}
+            />
+          )}
           <div className="absolute inset-0 bg-ink-900/0 group-hover:bg-ink-900/5 transition-colors duration-500 rounded-xl" />
 
           <button
@@ -81,7 +84,7 @@ export default function ProductCard({ perfume, index = 0, onQuickAdd, priority =
             </h3>
           </Link>
           <p className="text-sm font-medium text-ink-900 mb-2">
-            от {minPrice.toLocaleString('ru-RU')} ₽
+            {minPrice !== null ? `от ${minPrice.toLocaleString('ru-RU')} ₽` : 'Цена по запросу'}
           </p>
           {onQuickAdd ? (
             <button

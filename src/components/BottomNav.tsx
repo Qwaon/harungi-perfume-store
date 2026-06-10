@@ -23,6 +23,7 @@ export default function BottomNav() {
     >
       <Link
         href="/"
+        aria-current={isActive('/') ? 'page' : undefined}
         className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-3 text-[10px] tracking-wider uppercase transition-colors ${isActive('/') ? activeClass : inactiveClass}`}
       >
         <svg width="20" height="18" viewBox="0 0 15 13" fill="currentColor">
@@ -33,6 +34,7 @@ export default function BottomNav() {
 
       <Link
         href="/catalog"
+        aria-current={isActive('/catalog') ? 'page' : undefined}
         className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-3 text-[10px] tracking-wider uppercase transition-colors ${isActive('/catalog') ? activeClass : inactiveClass}`}
       >
         <svg width="20" height="18" viewBox="0 0 12 11" fill="currentColor">
@@ -62,6 +64,7 @@ export default function BottomNav() {
       {isTelegram && (
         <Link
           href="/account"
+          aria-current={isActive('/account') ? 'page' : undefined}
           className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-3 text-[10px] tracking-wider uppercase transition-colors ${isActive('/account') ? activeClass : inactiveClass}`}
         >
           <svg width="20" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">

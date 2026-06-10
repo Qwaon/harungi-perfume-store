@@ -42,7 +42,7 @@ export default async function BrandCatalogPage({ params }: Props) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="mb-12 md:mb-16">
           <p className="label text-gold-500 mb-3">Брендовая подборка</p>
-          <h1 className="section-title mb-4">{entry.name}</h1>
+          <h1 className="section-title mb-4 break-words">{entry.name}</h1>
           <p className="text-sm md:text-base text-ink-500 max-w-2xl leading-relaxed">
             Отобранные ароматы {entry.name}: распивы для знакомства и оригиналы для тех, кто уже нашёл свой флакон.
           </p>

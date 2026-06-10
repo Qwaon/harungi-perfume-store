@@ -44,11 +44,19 @@ export default async function SummerFragrancesPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-20">
-          {picks.map((perfume, index) => (
-            <ProductCard key={perfume.id} perfume={perfume} index={index} />
-          ))}
-        </div>
+        {picks.length > 0 ? (
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-20">
+            {picks.map((perfume, index) => (
+              <ProductCard key={perfume.id} perfume={perfume} index={index} />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl bg-cream-50 p-8 mb-20 text-center" style={{ boxShadow: '0px 0px 0px 1px #e8e6dc' }}>
+            <p className="text-ink-500 text-sm leading-relaxed">
+              Сейчас собираем ароматы для этой подборки. Загляните в каталог — там вся актуальная коллекция.
+            </p>
+          </div>
+        )}
 
         <Link href="/catalog" className="btn-outline">Открыть весь каталог</Link>
       </div>

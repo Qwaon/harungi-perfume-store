@@ -16,10 +16,12 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   viewportFit: 'cover',
+  // Tints mobile browser chrome / status bar to the page background (cream-100).
+  themeColor: '#f5f4ed',
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://qwaon.github.io/harungi-perfume-store'),
+  metadataBase: new URL('https://tiamlo.vercel.app'),
   title: {
     default: 'HARUNGI | Нишевая и селективная парфюмерия',
     template: '%s | HARUNGI',

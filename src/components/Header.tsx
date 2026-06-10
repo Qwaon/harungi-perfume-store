@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useCart } from '@/contexts/CartContext';
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const { count, openCart } = useCart();
+  const pathname = usePathname();
+  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 40);
@@ -38,16 +41,20 @@ export default function Header() {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-10">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="label text-ink-500 hover:text-ink-900 transition-colors duration-200 relative group"
-            >
-              {link.label}
-              <span className="absolute -bottom-0.5 left-0 w-0 h-px bg-ink-900 group-hover:w-full transition-all duration-300" />
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            const active = isActive(link.href);
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                aria-current={active ? 'page' : undefined}
+                className={`label transition-colors duration-200 relative group ${active ? 'text-ink-900' : 'text-ink-500 hover:text-ink-900'}`}
+              >
+                {link.label}
+                <span className={`absolute -bottom-0.5 left-0 h-px bg-ink-900 transition-all duration-300 ${active ? 'w-full' : 'w-0 group-hover:w-full'}`} />
+              </Link>
+            );
+          })}
           <button
             onClick={openCart}
             className="relative w-11 h-11 flex items-center justify-center rounded-full hover:bg-cream-200/50 transition-colors"

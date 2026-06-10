@@ -22,6 +22,7 @@ export default function FAQItem({ q, a, index }: Props) {
     >
       <button
         onClick={() => setOpen(!open)}
+        aria-expanded={open}
         className="flex items-start justify-between gap-4 w-full py-6 text-left group"
       >
         <span className="font-display text-lg sm:text-xl font-light text-ink-900 group-hover:text-ink-500 transition-colors leading-snug">

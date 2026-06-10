@@ -13,7 +13,7 @@ export const metadata = {
 const reasons = [
   {
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none">
         <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
         <path d="M12 3L4 7v5c0 4.418 3.371 8.132 8 9 4.629-.868 8-4.582 8-9V7L12 3z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/>
       </svg>
@@ -23,7 +23,7 @@ const reasons = [
   },
   {
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none">
         <path d="M9 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V9l-6-6z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/>
         <path d="M9 3v6h6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
         <circle cx="12" cy="15" r="2" stroke="currentColor" strokeWidth="1.5"/>
@@ -34,7 +34,7 @@ const reasons = [
   },
   {
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none">
         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" stroke="currentColor" strokeWidth="1.8"/>
         <path d="M12 6v6l4 2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
       </svg>
@@ -44,7 +44,7 @@ const reasons = [
   },
   {
     icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none">
         <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/>
       </svg>
     ),

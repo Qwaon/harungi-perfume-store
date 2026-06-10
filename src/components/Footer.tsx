@@ -10,14 +10,14 @@ export default function Footer() {
           <p className="font-display text-3xl font-light tracking-[0.2em] text-white mb-4">
             HARUNGI
           </p>
-          <p className="text-sm text-ink-300 leading-relaxed max-w-xs">
+          <p className="text-sm text-cream-300 leading-relaxed max-w-xs">
             Нишевая и селективная парфюмерия. Оригиналы и распивы от 5 мл. Только настоящие ароматы.
           </p>
         </div>
 
         {/* Links */}
         <div>
-          <p className="label text-ink-300 mb-5">Навигация</p>
+          <p className="label text-cream-300 mb-5">Навигация</p>
           <div className="flex flex-col gap-3">
             <Link href="/" className="text-sm text-cream-200 hover:text-white transition-colors duration-200">
               Главная
@@ -39,7 +39,7 @@ export default function Footer() {
 
         {/* Contact */}
         <div>
-          <p className="label text-ink-300 mb-5">Контакты</p>
+          <p className="label text-cream-300 mb-5">Контакты</p>
           <div className="flex flex-col gap-3">
             <a
               href={TELEGRAM_URL}
@@ -53,7 +53,7 @@ export default function Footer() {
               </svg>
               Написать нам
             </a>
-            <p className="text-sm text-ink-300 leading-relaxed">
+            <p className="text-sm text-cream-300 leading-relaxed">
               Принимаем заявки на заказ.<br />Ставрополь и доставка по всей России.
             </p>
           </div>
@@ -61,10 +61,10 @@ export default function Footer() {
       </div>
 
       <div className="border-t border-ink-700 max-w-7xl mx-auto px-4 sm:px-6 pt-6 flex flex-col md:flex-row items-center justify-between gap-3" style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))' }}>
-        <p className="text-xs text-ink-500">
+        <p className="text-xs text-cream-300">
           © {new Date().getFullYear()} HARUNGI. Все права защищены.
         </p>
-        <p className="text-xs text-ink-500">
+        <p className="text-xs text-cream-300">
           Только оригинальная парфюмерия
         </p>
       </div>

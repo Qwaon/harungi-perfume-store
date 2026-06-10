@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { trackEvent } from '@/lib/analytics';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -39,6 +40,7 @@ export default function Hero() {
         >
           <Link
             href="/catalog"
+            onClick={() => trackEvent('cta_click', { label: 'hero_catalog' })}
             className="inline-flex items-center justify-center gap-2 bg-cream-50 text-ink-900 px-8 py-3.5 text-sm tracking-widest uppercase font-medium rounded-full transition-all duration-200 hover:bg-white hover:-translate-y-px cursor-pointer"
             style={{ boxShadow: '0px 0px 0px 1px rgba(209,207,197,0.3)' }}
           >

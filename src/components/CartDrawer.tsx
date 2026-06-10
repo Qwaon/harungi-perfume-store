@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -10,12 +10,16 @@ import { pluralizeRu, POSITION_FORMS } from '@/lib/plural';
 export default function CartDrawer() {
   const { items, removeItem, updateQuantity, clearCart, total, count, isOpen, closeCart } = useCart();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeCart(); };
     document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
+    // Move focus into the dialog on open so keyboard/screen-reader users land
+    // inside the cart instead of being left on the background page.
+    const t = setTimeout(() => closeBtnRef.current?.focus(), 50);
+    return () => { document.removeEventListener('keydown', onKey); clearTimeout(t); };
   }, [isOpen, closeCart]);
 
   return (
@@ -65,6 +69,7 @@ export default function CartDrawer() {
                     )}
                   </div>
                   <button
+                    ref={closeBtnRef}
                     onClick={closeCart}
                     className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-cream-200 transition-colors"
                     aria-label="Закрыть корзину"
@@ -138,11 +143,11 @@ export default function CartDrawer() {
                                 )}
                               </div>
 
-                              {/* Quantity stepper */}
-                              <div className="flex items-center gap-1 mt-2">
+                              {/* Quantity stepper — 44px touch targets */}
+                              <div className="flex items-center gap-1 mt-2 -ml-1">
                                 <button
                                   onClick={() => updateQuantity(item.perfumeId, item.volume, item.quantity - 1)}
-                                  className="w-8 h-8 rounded-full flex items-center justify-center border border-cream-200 text-ink-700 hover:border-ink-500 hover:bg-cream-100 transition-colors"
+                                  className="w-11 h-11 rounded-full flex items-center justify-center border border-cream-200 text-ink-700 hover:border-ink-500 hover:bg-cream-100 transition-colors"
                                   aria-label={`Уменьшить количество ${item.perfumeName}`}
                                 >
                                   <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
@@ -158,7 +163,8 @@ export default function CartDrawer() {
                                 </span>
                                 <button
                                   onClick={() => updateQuantity(item.perfumeId, item.volume, item.quantity + 1)}
-                                  className="w-8 h-8 rounded-full flex items-center justify-center border border-cream-200 text-ink-700 hover:border-ink-500 hover:bg-cream-100 transition-colors"
+                                  disabled={item.quantity >= 99}
+                                  className="w-11 h-11 rounded-full flex items-center justify-center border border-cream-200 text-ink-700 hover:border-ink-500 hover:bg-cream-100 transition-colors disabled:opacity-40 disabled:hover:border-cream-200 disabled:hover:bg-transparent disabled:cursor-not-allowed"
                                   aria-label={`Увеличить количество ${item.perfumeName}`}
                                 >
                                   <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
