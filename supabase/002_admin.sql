@@ -10,8 +10,14 @@ create table if not exists admin_sessions (
   draft          jsonb default '{}'::jsonb,  -- накопленные поля
   target_id      text,                  -- id аромата при edit/delete (null при add)
   last_update_id bigint,                -- idempotency: последний обработанный update_id
+  menu_message_id bigint,               -- id меню-сообщения для edit-in-place навигации
+  menu_is_photo  boolean default false, -- текущее меню-сообщение — фото-карточка (нельзя editMessageText в текст)
   updated_at     timestamptz default now()
 );
+
+-- Для уже развёрнутых БД (таблица существует) — добавить колонки, если их нет.
+alter table admin_sessions add column if not exists menu_message_id bigint;
+alter table admin_sessions add column if not exists menu_is_photo boolean default false;
 
 -- RLS включён БЕЗ политик: publishable-ключ сайта эту таблицу не видит.
 -- Доступ только у service_role (обходит RLS).
