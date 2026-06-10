@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Perfume } from '@/types';
+import { getMinPrice } from '@/data/utils';
 import { useFavorites } from '@/contexts/FavoritesContext';
 
 interface Props {
@@ -14,8 +15,7 @@ interface Props {
 }
 
 export default function ProductCard({ perfume, index = 0, onQuickAdd, priority = false }: Props) {
-  const priceValues = Object.values(perfume.prices).filter((p): p is number => typeof p === 'number' && p > 0);
-  const minPrice = priceValues.length > 0 ? Math.min(...priceValues) : null;
+  const minPrice = getMinPrice(perfume);
   const { isFavorite, toggle } = useFavorites();
   const fav = isFavorite(perfume.id);
 
