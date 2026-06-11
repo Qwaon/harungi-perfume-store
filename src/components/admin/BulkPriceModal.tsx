@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { CurrencyDollarIcon } from '@heroicons/react/24/outline';
 import { applyPriceDelta, BULK_PRICE_FIELDS, type BulkPriceField, type BulkPriceMode } from '@/lib/admin/catalog-logic';
 
 const FIELD_LABELS: Record<BulkPriceField, string> = {
@@ -99,7 +100,8 @@ export default function BulkPriceModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/40 p-4" role="dialog" aria-modal="true" aria-label="Массовое изменение цен">
       <div className="bg-cream-50 rounded-xl max-w-lg w-full max-h-[85vh] overflow-y-auto p-5 flex flex-col gap-4">
-        <h2 className="font-display text-xl font-light text-ink-900">
+        <h2 className="font-display text-xl font-light text-ink-900 flex items-center gap-2">
+          <CurrencyDollarIcon className="w-5 h-5 text-gold-500" />
           Изменить цены ({items.length})
         </h2>
 
