@@ -110,6 +110,18 @@ export async function countOrdersByStatus(): Promise<Record<string, number>> {
   return counts;
 }
 
+// --- Order items (для топов на дашборде) ---
+
+export async function selectAllOrderItems(): Promise<Record<string, unknown>[]> {
+  const { url } = assertEnv();
+  const res = await fetch(
+    `${url}/rest/v1/order_items?select=perfume_id,perfume_name,brand,quantity`,
+    { headers: headers(), cache: 'no-store' }
+  );
+  if (!res.ok) throw new Error(`Supabase select order_items ${res.status}`);
+  return res.json();
+}
+
 // --- Storage (фото) ---
 
 export async function uploadImage(bytes: ArrayBuffer, contentType: string, path: string): Promise<string> {
