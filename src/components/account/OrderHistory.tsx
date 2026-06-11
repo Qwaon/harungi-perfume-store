@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { readOrders, Order } from '@/lib/orderHistory';
 import { pluralizeRu, POSITION_FORMS } from '@/lib/plural';
 import { whenStorageReady } from '@/lib/storage';
+import CollapsibleSection from '@/components/account/CollapsibleSection';
 
 const STATUS_LABELS: Record<string, string> = {
   new: 'Новый',
@@ -37,31 +38,31 @@ export default function OrderHistory() {
 
   if (orders === null) {
     return (
-      <div className="flex flex-col gap-2 mb-10">
-        {[0, 1].map((i) => (
-          <div key={i} className="h-20 rounded-xl bg-cream-200 animate-pulse" />
-        ))}
-      </div>
+      <CollapsibleSection title="История заказов" defaultOpen>
+        <div className="flex flex-col gap-2">
+          {[0, 1].map((i) => (
+            <div key={i} className="h-20 rounded-xl bg-cream-200 animate-pulse" />
+          ))}
+        </div>
+      </CollapsibleSection>
     );
   }
 
   if (orders.length === 0) {
     return (
-      <div className="mb-10">
-        <p className="label text-ink-500 mb-3">История заказов</p>
+      <CollapsibleSection title="История заказов" count={0}>
         <div
           className="rounded-xl bg-cream-100 px-4 py-6 text-center text-sm text-ink-300"
           style={{ boxShadow: '0px 0px 0px 1px #e8e6dc' }}
         >
           Здесь появятся ваши заказы
         </div>
-      </div>
+      </CollapsibleSection>
     );
   }
 
   return (
-    <div className="mb-10">
-      <p className="label text-ink-500 mb-3">История заказов</p>
+    <CollapsibleSection title="История заказов" count={orders.length}>
       <div className="flex flex-col gap-2">
         {orders.map((o) => {
           const open = openId === o.id;
@@ -115,6 +116,6 @@ export default function OrderHistory() {
           );
         })}
       </div>
-    </div>
+    </CollapsibleSection>
   );
 }

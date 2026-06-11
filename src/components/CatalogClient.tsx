@@ -165,7 +165,7 @@ export default function CatalogClient({ perfumes, brands }: Props) {
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value as SortOption)}
-          className="input-base sm:w-40 cursor-pointer"
+          className="input-base w-32 sm:w-40 shrink-0 cursor-pointer"
         >
           {(Object.keys(SORT_LABELS) as SortOption[]).map((k) => (
             <option key={k} value={k}>{SORT_LABELS[k]}</option>

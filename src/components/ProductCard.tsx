@@ -21,11 +21,12 @@ export default function ProductCard({ perfume, index = 0, onQuickAdd, priority =
 
   return (
     <motion.div
+      className="h-full"
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.55, delay: Math.min(index * 0.06, 0.36), ease: [0.22, 1, 0.36, 1] }}
     >
-      <div className="group transition-transform duration-300 ease-out hover:-translate-y-1">
+      <div className="group h-full flex flex-col transition-transform duration-300 ease-out hover:-translate-y-1">
         {/* Image */}
         <Link href={`/product/${perfume.id}`} className="block relative overflow-hidden bg-cream-200 aspect-[3/4] rounded-xl mb-3">
           {perfume.images[0] && (
@@ -76,10 +77,10 @@ export default function ProductCard({ perfume, index = 0, onQuickAdd, priority =
         </Link>
 
         {/* Info + CTA */}
-        <div>
+        <div className="flex-1 flex flex-col">
           <p className="label text-ink-300 group-hover:text-gold-500 transition-colors duration-300 mb-1 break-words">{perfume.brand}</p>
           <Link href={`/product/${perfume.id}`}>
-            <h3 className="font-display text-lg font-light text-ink-900 hover:text-ink-500 transition-colors duration-200 leading-tight mb-2 break-words">
+            <h3 className="font-display text-lg font-light text-ink-900 hover:text-ink-500 transition-colors duration-200 leading-tight mb-2 break-words line-clamp-2 min-h-[2.75rem]">
               {perfume.name}
             </h3>
           </Link>
@@ -89,12 +90,12 @@ export default function ProductCard({ perfume, index = 0, onQuickAdd, priority =
           {onQuickAdd ? (
             <button
               onClick={(e) => { e.preventDefault(); onQuickAdd(perfume); }}
-              className="w-full min-h-11 text-xs font-medium text-ink-900 bg-cream-100 hover:bg-ink-900 hover:text-white border border-cream-200 hover:border-ink-900 py-2 rounded-lg transition-colors duration-150"
+              className="mt-auto w-full min-h-11 text-xs font-medium text-ink-900 bg-cream-100 hover:bg-ink-900 hover:text-white border border-cream-200 hover:border-ink-900 py-2 rounded-lg transition-colors duration-150"
             >
               + В корзину
             </button>
           ) : (
-            <p className="text-xs text-ink-300 capitalize">{perfume.gender}</p>
+            <p className="mt-auto text-xs text-ink-300 capitalize">{perfume.gender}</p>
           )}
         </div>
       </div>

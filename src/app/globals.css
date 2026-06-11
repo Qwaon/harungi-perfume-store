@@ -190,6 +190,15 @@ input[type='range']::-webkit-slider-thumb:hover {
    срабатывают по ширине окна. Сменой <meta viewport> на десктопе это не
    лечится (проверено) — точечно возвращаем мобильную вёрстку. */
 
+/* 0) Поля ввода: ≥16px, иначе iOS/Telegram WebView зумит экран при фокусе.
+   .input-base форсит text-sm (14px) — перебиваем внутри Mini App. */
+.tg-app input,
+.tg-app select,
+.tg-app textarea,
+.tg-app .input-base {
+  font-size: 16px !important;
+}
+
 /* 1) Колонка телефона по центру, фон по бокам */
 .tg-app {
   --tg-w: 480px;

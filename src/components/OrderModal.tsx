@@ -267,7 +267,7 @@ export default function OrderModal({ isOpen, onClose, perfumeName, perfumeId, br
                         </svg>
                       </div>
                       <h3 className="font-display text-3xl font-light text-ink-900 mb-3">
-                        {orderNumber != null ? `Заявка №${orderNumber} принята` : 'Заявка отправлена'}
+                        {orderNumber != null ? 'Заявка принята' : 'Заявка отправлена'}
                       </h3>
                       <div className="text-ink-500 text-sm leading-relaxed mb-8 text-left bg-cream-100 rounded-xl px-4 py-3" style={{ boxShadow: '0px 0px 0px 1px #e8e6dc' }}>
                         <p className="mb-2">Что дальше:</p>

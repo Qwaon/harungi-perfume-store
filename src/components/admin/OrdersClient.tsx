@@ -15,6 +15,18 @@ const STATUS_LABELS: Record<string, string> = {
 const STATUS_TABS = ['', 'new', 'accepted', 'shipped', 'done', 'canceled'];
 const TAB_LABEL: Record<string, string> = { '': 'Все', ...STATUS_LABELS };
 
+/** Ссылка для контакта: @ник/ник → t.me, телефон → tel:, иначе null. */
+function contactHref(raw: string): string | null {
+  const t = (raw || '').trim();
+  if (!t) return null;
+  if (/^@?[a-zA-Z0-9_]{4,32}$/.test(t)) return `https://t.me/${t.replace(/^@/, '')}`;
+  const digits = t.replace(/\D/g, '');
+  if (/^\+?[0-9\s\-()]{7,20}$/.test(t) && digits.length >= 7) {
+    return `tel:${t.startsWith('+') ? '+' : ''}${digits}`;
+  }
+  return null;
+}
+
 export default function OrdersClient() {
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [status, setStatus] = useState('');
@@ -90,6 +102,13 @@ export default function OrdersClient() {
                         <span className="tabular-nums">{(it.quantity * it.price).toLocaleString('ru-RU')} ₽</span>
                       </div>
                     ))}
+                    <div className="text-sm text-ink-700">
+                      <span className="text-ink-300">Контакт: </span>
+                      {contactHref(o.contact)
+                        ? <a href={contactHref(o.contact) as string} target="_blank" rel="noopener noreferrer"
+                            className="text-gold-500 underline hover:text-ink-900">{o.contact}</a>
+                        : <span>{o.contact}</span>}
+                    </div>
                     <div className="flex flex-wrap gap-1.5">
                       {STATUS_TABS.filter(Boolean).map((s) => (
                         <button key={s} onClick={() => changeStatus(o.id, s)}

@@ -16,17 +16,17 @@ export default function AccountProfile({ user }: { user: TelegramUser | null }) 
           alt={name}
           width={64}
           height={64}
-          className="w-16 h-16 rounded-full object-cover"
+          className="w-16 h-16 rounded-full object-cover shrink-0"
           unoptimized
         />
       ) : (
-        <div className="w-16 h-16 rounded-full bg-gold-500 text-cream-50 flex items-center justify-center font-display text-2xl">
+        <div className="w-16 h-16 shrink-0 rounded-full bg-gold-500 text-cream-50 flex items-center justify-center font-display text-2xl">
           {initial}
         </div>
       )}
-      <div>
-        <h1 className="font-display text-2xl font-light text-ink-900">{name}</h1>
-        {user?.username && <p className="text-sm text-ink-300">@{user.username}</p>}
+      <div className="min-w-0 flex-1">
+        <h1 className="font-display text-2xl font-light text-ink-900 leading-tight break-words">{name}</h1>
+        {user?.username && <p className="text-sm text-ink-300 truncate">@{user.username}</p>}
       </div>
     </div>
   );
