@@ -7,7 +7,7 @@ import { ENUMS } from '@/lib/admin/catalog-logic';
 import BulkPriceModal, { type BulkPriceItem } from './BulkPriceModal';
 import {
   MagnifyingGlassIcon, FunnelIcon, PhotoIcon, PencilSquareIcon, TrashIcon,
-  CurrencyDollarIcon,
+  CurrencyDollarIcon, PlusIcon,
 } from '@heroicons/react/24/outline';
 
 interface P {
@@ -139,7 +139,10 @@ export default function CatalogListClient() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h1 className="font-display text-2xl font-light text-ink-900">Каталог</h1>
-        <Link href="/admin/catalog/new" className="btn-primary text-sm">➕ Добавить</Link>
+        <Link href="/admin/catalog/new" className="btn-primary text-sm flex items-center gap-1.5">
+          <PlusIcon className="w-4 h-4" />
+          Добавить
+        </Link>
       </div>
 
       <div className="relative mb-3">
