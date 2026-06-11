@@ -134,3 +134,15 @@ export function draftToPerfumeRow(draft: PerfumeDraft): Record<string, unknown> 
     bestseller: Boolean(draft.bestseller),
   };
 }
+
+export const BULK_PRICE_FIELDS = [
+  'price_5ml', 'price_10ml', 'price_15ml', 'price_20ml', 'price_original',
+] as const;
+
+export type BulkPriceField = typeof BULK_PRICE_FIELDS[number];
+export type BulkPriceMode = 'percent' | 'fixed';
+
+export function applyPriceDelta(old: number, mode: BulkPriceMode, value: number): number {
+  const raw = mode === 'percent' ? old * (1 + value / 100) : old + value;
+  return Math.max(0, Math.round(raw));
+}
