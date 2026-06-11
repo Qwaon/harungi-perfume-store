@@ -5,6 +5,10 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ENUMS } from '@/lib/admin/catalog-logic';
 import BulkPriceModal, { type BulkPriceItem } from './BulkPriceModal';
+import {
+  MagnifyingGlassIcon, FunnelIcon, PhotoIcon, PencilSquareIcon, TrashIcon,
+  CurrencyDollarIcon,
+} from '@heroicons/react/24/outline';
 
 interface P {
   id: string; brand: string; name: string; images: string | null; inStock: boolean;
@@ -31,6 +35,14 @@ function priceSummary(p: P): string {
 
 function hasNoPrice(p: P): boolean {
   return PRICE_FIELDS.every(([k]) => p[k] == null || p[k] === 0);
+}
+
+function StockBadge({ inStock }: { inStock: boolean }) {
+  return inStock ? (
+    <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/10 text-green-700">в наличии</span>
+  ) : (
+    <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-700">нет в наличии</span>
+  );
 }
 
 export default function CatalogListClient() {
@@ -130,9 +142,16 @@ export default function CatalogListClient() {
         <Link href="/admin/catalog/new" className="btn-primary text-sm">➕ Добавить</Link>
       </div>
 
-      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Поиск по бренду/названию" className="input-base mb-3" />
+      <div className="relative mb-3">
+        <MagnifyingGlassIcon className="w-4 h-4 text-ink-300 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Поиск по бренду/названию" className="input-base pl-9" />
+      </div>
 
-      <div className="flex flex-wrap gap-2 mb-3">
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        <span className="flex items-center gap-1.5 text-xs text-ink-300 label">
+          <FunnelIcon className="w-4 h-4" />
+          Фильтры
+        </span>
         <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} className="input-base w-auto text-sm">
           <option value="brand">Сортировка: бренд</option>
           <option value="name">Сортировка: название</option>
@@ -169,18 +188,20 @@ export default function CatalogListClient() {
         )}
       </div>
 
-      <div className="flex items-center gap-3 mb-3 text-sm">
+      <div className="flex items-center gap-3 mb-3 text-sm flex-wrap">
         <button type="button" onClick={selectAllVisible} className="text-ink-500 hover:text-ink-900 underline">Выбрать все ({filtered.length})</button>
         <button type="button" onClick={clearSelection} className="text-ink-500 hover:text-ink-900 underline">Снять всё</button>
-        {selected.size > 0 && (
-          <>
-            <span className="text-ink-300">Выбрано: {selected.size}</span>
-            <button type="button" onClick={() => setShowBulk(true)} className="btn-primary text-xs px-3 py-1.5">
-              Изменить цены ({selected.size})
-            </button>
-          </>
-        )}
       </div>
+
+      {selected.size > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 md:static md:z-auto bg-ink-900 text-cream-50 md:bg-cream-200 md:text-ink-900 md:rounded-xl px-4 py-3 md:py-2 mb-3 flex items-center gap-3">
+          <span className="text-sm">Выбрано: {selected.size}</span>
+          <button type="button" onClick={() => setShowBulk(true)} className="btn-primary text-xs px-3 py-1.5 ml-auto md:ml-0 flex items-center gap-1.5">
+            <CurrencyDollarIcon className="w-4 h-4" />
+            Изменить цены ({selected.size})
+          </button>
+        </div>
+      )}
 
       {items === null ? <p className="text-ink-300 text-sm">Загрузка…</p> : (
         <div className="flex flex-col gap-2">
@@ -190,20 +211,29 @@ export default function CatalogListClient() {
             return (
               <div key={p.id}>
                 {groupHeader && (
-                  <div className="sticky top-14 bg-cream-100 px-1 py-1 label text-ink-300 z-10">{p.brand}</div>
+                  <div className="sticky top-14 bg-cream-100 px-1 py-1.5 label text-ink-300 z-10 border-b border-cream-200">{p.brand}</div>
                 )}
                 <div className="flex items-center gap-3 rounded-xl bg-cream-50 px-3 py-2" style={{ boxShadow: '0px 0px 0px 1px #e8e6dc' }}>
                   <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleSelect(p.id)} className="w-4 h-4 shrink-0" aria-label={`Выбрать ${p.brand} ${p.name}`} />
                   {p.images
                     // eslint-disable-next-line @next/next/no-img-element
                     ? <img src={p.images.split(',')[0].trim()} alt="" className="w-12 h-12 object-cover rounded-lg shrink-0" />
-                    : <div className="w-12 h-12 rounded-lg bg-cream-200 shrink-0" />}
+                    : <div className="w-12 h-12 rounded-lg bg-cream-200 shrink-0 flex items-center justify-center">
+                        <PhotoIcon className="w-6 h-6 text-ink-300" />
+                      </div>}
                   <div className="min-w-0 flex-1">
                     <p className="text-sm text-ink-900 truncate">{p.brand} — {p.name}</p>
-                    <p className="text-xs text-ink-300">{p.inStock ? 'в наличии' : 'нет в наличии'}{priceSummary(p) ? ` · ${priceSummary(p)}` : ''}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <StockBadge inStock={p.inStock} />
+                      {priceSummary(p) && <p className="text-xs text-ink-300">{priceSummary(p)}</p>}
+                    </div>
                   </div>
-                  <button onClick={() => router.push(`/admin/catalog/${p.id}`)} className="text-xs text-ink-500 hover:text-ink-900 shrink-0">Править</button>
-                  <button onClick={() => remove(p.id)} className="text-xs text-ink-500 hover:text-ink-900 shrink-0">Удалить</button>
+                  <button onClick={() => router.push(`/admin/catalog/${p.id}`)} aria-label="Править" className="text-ink-500 hover:text-ink-900 shrink-0 p-1">
+                    <PencilSquareIcon className="w-[18px] h-[18px]" />
+                  </button>
+                  <button onClick={() => remove(p.id)} aria-label="Удалить" className="text-ink-500 hover:text-red-600 shrink-0 p-1">
+                    <TrashIcon className="w-[18px] h-[18px]" />
+                  </button>
                 </div>
               </div>
             );
