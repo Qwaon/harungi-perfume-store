@@ -5,12 +5,18 @@
 ## Цель
 
 Перенести управление магазином из Telegram-бота в удобную **веб-админку** на том
-же сайте (`/admin`): полный CRUD каталога (паритет с ботом, но на удобных формах)
-плюс новый раздел «Заказы» (список, фильтр/поиск, смена статуса, примечания).
+же сайте (`/admin`): полный CRUD каталога (на удобных формах) плюс новый раздел
+«Заказы» (список, фильтр/поиск, смена статуса, примечания).
 
-Telegram админ-бот **остаётся** (пишет в ту же Supabase) как быстрый доступ с
-телефона; веб-админка становится основным инструментом. Публичный сайт и приём
-заказов не затрагиваются.
+Telegram админ-бот каталога (`workers/admin-bot.js`) **полностью выводится из
+эксплуатации**: код удаляется из репозитория, развёрнутый Cloudflare Worker
+отключается. Веб-админка становится **единственным** инструментом управления
+каталогом.
+
+**Что НЕ затрагивается:** публичный сайт и **приём заказов** — Worker
+`workers/order-webhook.js` (другой Worker: принимает заявки с сайта, пишет в
+Supabase `orders`/`order_items`, шлёт в чат, отдаёт историю Mini App) остаётся
+работать как есть. Веб-админка лишь **читает** эти заказы и меняет их статус.
 
 ## Архитектура (подход A)
 
@@ -158,7 +164,7 @@ Telegram-чате (Worker редактирует сообщение). Смена
 - Фото: галерея текущих + загрузка новых + удаление.
 
 **Создание.** `id` = `slugify(бренд+название)` + `makeUniqueId` (коллизии по
-существующим id) — копия логики бота. POST → `upsertPerfume`.
+существующим id). POST → `upsertPerfume`.
 
 **Правка.** Форма предзаполнена; PATCH меняет поля. При смене бренда/названия
 `id` **не трогаем** (стабильный ключ, на него ссылается `order_items.perfume_id`).
@@ -175,10 +181,12 @@ Telegram-чате (Worker редактирует сообщение). Смена
 (и затронутых страниц), чтобы изменения были на сайте сразу, не дожидаясь
 ISR `revalidate=60`.
 
-**Технический долг (явно).** `slugify`, `makeUniqueId`, `validateField`,
-`draftToPerfumeRow`, `ENUMS`/`MULTI_ENUMS` — **копируются** из
-`workers/admin-bot.js` в `src/lib/admin/`. Бот сохраняет свою копию. При
-расхождении — известный долг; **обе копии менять синхронно**.
+**Логика нормализации.** `slugify`, `makeUniqueId`, `validateField`,
+`draftToPerfumeRow`, `ENUMS`/`MULTI_ENUMS` живут в `src/lib/admin/catalog-logic.ts`
+как **самостоятельный источник правды**. Изначально эти функции были в
+`workers/admin-bot.js`; при выводе бота из эксплуатации они переносятся в админку
+(а не дублируются — копировать больше не во что). Дублирования логики между ботом
+и сайтом после удаления бота **не остаётся**.
 
 ## Секция 5 — Ошибки, безопасность, тестирование
 
@@ -206,13 +214,31 @@ ISR `revalidate=60`.
 rate-limit логина; аналитика сверх простых счётчиков; аудит-лог; пагинация
 заказов (добавим, если заказов станет много).
 
+## Вывод Telegram админ-бота из эксплуатации
+
+После того как веб-админка работает и проверена, админ-бот каталога выводится
+полностью:
+
+1. **Удаление кода** из репозитория: `workers/admin-bot.js`,
+   `workers/admin-bot.test.mjs`, `workers/wrangler.admin-bot.toml`.
+2. **Отключение Worker'а** в Cloudflare (ручной шаг — вне кода):
+   - снять webhook бота: `curl "https://api.telegram.org/bot<ADMIN_BOT_TOKEN>/deleteWebhook"`;
+   - удалить Worker (`wrangler delete -c workers/wrangler.admin-bot.toml` до удаления
+     конфига, **или** через Dashboard → Workers & Pages → admin-bot → Delete).
+3. **Документация:** убрать/пометить устаревшим раздел про админ-бота в `CLAUDE.md`
+   (CLAUDE.md в `.gitignore` — правится локально, не коммитится).
+
+Таблица `admin_sessions` (`supabase/002_admin.sql`) после удаления бота не
+используется — оставляем как есть (не мешает; дроп — отдельным разовым SQL при
+желании). `order-webhook.js` и его инфраструктура — **не трогаются**.
+
 ## Затрагиваемые/новые файлы
 
 ```
 src/middleware.ts                         (нов.) защита /admin и /api/admin
 src/lib/admin/session.ts                  (нов.) sign/verify cookie-сессии
 src/lib/admin/supabase-server.ts          (нов.) service_role клиент + обёртки
-src/lib/admin/catalog-logic.ts            (нов.) slugify/validate/draftToRow (копия из бота)
+src/lib/admin/catalog-logic.ts            (нов.) slugify/validate/draftToRow (перенос из бота)
 src/lib/admin/catalog-logic.test.mjs      (нов.) юнит-тесты
 src/lib/admin/session.test.mjs            (нов.) юнит-тесты
 src/app/admin/layout.tsx                  (нов.) layout админки (sidebar)
@@ -230,7 +256,12 @@ src/app/api/admin/orders/[id]/route.ts    (нов.)
 src/app/api/admin/catalog/route.ts        (нов.)
 src/app/api/admin/catalog/[id]/route.ts   (нов.)
 src/app/api/admin/catalog/[id]/photo/route.ts (нов.)
+
+workers/admin-bot.js                      (удалить) бот каталога — выводится из эксплуатации
+workers/admin-bot.test.mjs                (удалить)
+workers/wrangler.admin-bot.toml           (удалить)
 ```
 
-Существующие файлы публичного сайта и Worker'ов — не меняются.
-```
+Файлы публичного сайта и Worker заказов (`workers/order-webhook.js`) — не
+меняются. Из репозитория удаляются только файлы админ-бота каталога (см. раздел
+«Вывод Telegram админ-бота из эксплуатации»).
