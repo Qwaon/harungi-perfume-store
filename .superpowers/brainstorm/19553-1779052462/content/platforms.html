@@ -1,0 +1,31 @@
+<h2>Для каких платформ делаем редизайн?</h2>
+<p class="subtitle">Каждая платформа — отдельный UX. Нужно понять приоритеты.</p>
+
+<div class="options" data-multiselect>
+  <div class="option" data-choice="desktop" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Десктоп (браузер)</h3>
+      <p>Полноценный сайт на широком экране — большой каталог, боковые фильтры, подробные карточки товаров</p>
+    </div>
+  </div>
+  <div class="option" data-choice="mobile-web" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Мобильный браузер</h3>
+      <p>Обычный сайт на телефоне — тот же Next.js, адаптивная вёрстка, без ограничений TG</p>
+    </div>
+  </div>
+  <div class="option" data-choice="tg-miniapp" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Telegram Mini App</h3>
+      <p>Открывается внутри Telegram — нативная нижняя панель, MainButton TG, haptic feedback, нет URL-бара</p>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 24px; background: #f5f4ed; border-radius: 12px; padding: 16px;">
+  <p class="label" style="margin-bottom: 8px;">Контекст проекта</p>
+  <p style="color: #5e5d59; font-size: 14px;">Сейчас это Next.js сайт с адаптивной вёрсткой. TG Mini App потребует отдельной реализации (Telegram WebApp SDK) — или адаптации существующего сайта под TG-среду.</p>
+</div>
