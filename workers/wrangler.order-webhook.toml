@@ -1,0 +1,17 @@
+# Wrangler-конфиг для Worker'а приёма заказов.
+# Деплой:  wrangler deploy -c workers/wrangler.order-webhook.toml
+# Секреты задаются отдельно (НЕ в этом файле — он в гите):
+#   wrangler secret put TELEGRAM_BOT_TOKEN     -c workers/wrangler.order-webhook.toml
+#   wrangler secret put SUPABASE_SERVICE_KEY   -c workers/wrangler.order-webhook.toml
+#   wrangler secret put TELEGRAM_WEBHOOK_SECRET -c workers/wrangler.order-webhook.toml
+
+name = "order-webhook"
+main = "order-webhook.js"
+compatibility_date = "2024-09-01"
+
+# Не-секретные переменные. Секреты (токен бота, service_role, webhook-секрет)
+# задаются через `wrangler secret put` и здесь НЕ хранятся.
+[vars]
+SUPABASE_URL = "https://pdzjfymqgheasgqihpob.supabase.co"
+TELEGRAM_CHAT_ID = "1410709676"
+ALLOWED_ORIGIN = "https://tiamlo.vercel.app"

@@ -248,6 +248,8 @@ async function handleOrder(request, env, allowedOrigin) {
     const sendBody = {
       chat_id: env.TELEGRAM_CHAT_ID,
       text,
+      parse_mode: 'HTML',
+      disable_web_page_preview: true,
     };
     // Кнопки статуса добавляются только если запись создана (есть id).
     if (order && order.id) {
@@ -295,34 +297,85 @@ function validatePayload(payload) {
   return null;
 }
 
+/** Экранирование под parse_mode=HTML (Telegram требует &lt; &gt; &amp;). */
+function escapeHtml(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+/**
+ * Кликабельный контакт. @ник / ник → ссылка t.me; телефон → tel:.
+ * Иначе — просто экранированный текст.
+ */
+function contactLink(raw) {
+  const t = String(raw || '').trim();
+  if (!t) return '—';
+  // Telegram-ник (с @ или без).
+  if (/^@?[a-zA-Z0-9_]{4,32}$/.test(t)) {
+    const handle = t.replace(/^@/, '');
+    return `<a href="https://t.me/${handle}">@${escapeHtml(handle)}</a>`;
+  }
+  // Телефон.
+  const digits = t.replace(/\D/g, '');
+  if (/^\+?[0-9\s\-()]{7,20}$/.test(t) && digits.length >= 7) {
+    const tel = t.startsWith('+') ? `+${digits}` : digits;
+    return `<a href="tel:${tel}">${escapeHtml(t)}</a>`;
+  }
+  return escapeHtml(t);
+}
+
+/** timestamp (мс) → читаемые дата и время по Москве. */
+function formatTime(ts) {
+  const n = Number(ts);
+  const d = Number.isFinite(n) ? new Date(n) : new Date();
+  try {
+    return new Intl.DateTimeFormat('ru-RU', {
+      timeZone: 'Europe/Moscow', day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    }).format(d) + ' МСК';
+  } catch {
+    return d.toISOString();
+  }
+}
+
 function formatTelegramMessage(payload, orderNumber) {
-  const title = payload.messageType === 'consultation' ? 'Новая консультация' : 'Новый заказ';
-  const header = orderNumber ? `${title} №${orderNumber}` : title;
+  const isConsultation = payload.messageType === 'consultation';
+  const isCart = Array.isArray(payload.items);
+  const icon = isConsultation ? '💬' : '🛒';
+  const title = isConsultation ? 'Новая консультация' : 'Новый заказ';
+  const header = orderNumber ? `${icon} <b>${title} №${orderNumber}</b>` : `${icon} <b>${title}</b>`;
   const lines = [header, ''];
 
-  if (Array.isArray(payload.items)) {
+  if (isCart) {
     // Заказ-корзина.
+    let totalQty = 0;
     payload.items.forEach((item) => {
-      const qtyPart = item.quantity > 1 ? ` ×${item.quantity}` : '';
-      const linePrice = Number(item.price * item.quantity).toLocaleString('ru-RU');
-      lines.push(`• ${item.brand} — ${item.perfumeName} ${item.volumeLabel}${qtyPart} — ${linePrice} ₽`);
+      const qty = Number(item.quantity) || 1;
+      totalQty += qty;
+      const qtyPart = qty > 1 ? ` ×${qty}` : '';
+      const linePrice = Number(item.price * qty).toLocaleString('ru-RU');
+      lines.push(`• <b>${escapeHtml(item.brand)}</b> — ${escapeHtml(item.perfumeName)} · ${escapeHtml(item.volumeLabel)}${qtyPart} — ${linePrice} ₽`);
     });
-    lines.push(`Итого: ${Number(payload.total).toLocaleString('ru-RU')} ₽`);
-  } else {
-    // Одиночный заказ / консультация.
-    lines.push(`Аромат: ${payload.brand} — ${payload.perfumeName}`);
-    lines.push(`Объём: ${payload.volumeLabel || payload.volume}`);
-    lines.push(`Цена: ${Number(payload.price).toLocaleString('ru-RU')} ₽`);
+    lines.push('', `Позиций: <b>${payload.items.length}</b> · товаров: <b>${totalQty}</b>`);
+    lines.push(`<b>Итого: ${Number(payload.total).toLocaleString('ru-RU')} ₽</b>`);
+  } else if (!isConsultation) {
+    // Одиночный заказ.
+    lines.push(`Аромат: <b>${escapeHtml(payload.brand)} — ${escapeHtml(payload.perfumeName)}</b>`);
+    lines.push(`Объём: <b>${escapeHtml(payload.volumeLabel || payload.volume)}</b>`);
+    lines.push(`Цена: <b>${Number(payload.price).toLocaleString('ru-RU')} ₽</b>`);
   }
 
-  lines.push(
-    '',
-    `Имя: ${payload.name}`,
-    `Контакт: ${payload.contact}`,
-    `Источник: ${payload.source}`,
-    `Страница: ${payload.pageUrl}`,
-    `Время: ${payload.timestamp}`
-  );
+  lines.push('', '<b>👤 Клиент</b>');
+  lines.push(`Имя: ${escapeHtml(payload.name)}`);
+  lines.push(`Контакт: ${contactLink(payload.contact)}`);
+
+  const pageUrl = String(payload.pageUrl || '');
+  if (pageUrl) lines.push(`Страница: <a href="${escapeHtml(pageUrl)}">открыть</a>`);
+  if (payload.source) lines.push(`Источник: ${escapeHtml(payload.source)}`);
+  lines.push(`Время: ${formatTime(payload.timestamp)}`);
+
   return lines.join('\n');
 }
 
