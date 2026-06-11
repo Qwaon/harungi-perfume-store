@@ -201,7 +201,10 @@ input[type='range']::-webkit-slider-thumb:hover {
 
 /* 1) Колонка телефона по центру, фон по бокам */
 .tg-app {
-  --tg-w: 480px;
+  /* Реальная ширина Telegram Mini App — 375–400px (телефон). Колонку держим
+     по верхней границе, чтобы на десктоп-Telegram (широкое окно Chromium)
+     приложение выглядело как на телефоне, а не растягивалось. */
+  --tg-w: 400px;
 }
 .tg-app body {
   max-width: var(--tg-w);
@@ -228,6 +231,7 @@ input[type='range']::-webkit-slider-thumb:hover {
 /* 2) Header: прячем десктоп-навигацию, показываем мобильную */
 .tg-app header nav.md\:flex { display: none !important; }
 .tg-app header .md\:h-20 { height: 4rem !important; }
+
 
 /* 3) BottomNav: всегда показываем (снимаем md:hidden) */
 .tg-app nav.md\:hidden { display: flex !important; }

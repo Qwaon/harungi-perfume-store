@@ -19,7 +19,7 @@ export default function AccountClient({ perfumes }: { perfumes: Perfume[] }) {
 
   if (isTelegram === undefined) {
     return (
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-28 md:pt-36 pb-8">
         <div className="h-16 w-48 rounded-xl bg-cream-200 animate-pulse mb-8" />
         <div className="h-40 rounded-xl bg-cream-200 animate-pulse" />
       </div>
@@ -28,7 +28,7 @@ export default function AccountClient({ perfumes }: { perfumes: Perfume[] }) {
 
   if (!isTelegram) {
     return (
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-16 text-center">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-28 md:pt-36 pb-16 text-center">
         <h1 className="font-display text-3xl font-light text-ink-900 mb-3">Аккаунт</h1>
         <p className="text-ink-500 text-sm mb-8">
           Раздел доступен в нашем Telegram-приложении.
@@ -46,7 +46,7 @@ export default function AccountClient({ perfumes }: { perfumes: Perfume[] }) {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-28 md:pt-36 pb-8">
       <AccountProfile user={user} />
       <OrderHistory />
       <FavoritesGrid perfumes={perfumes} />
