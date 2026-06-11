@@ -1,11 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import { CartProvider } from '@/contexts/CartContext';
-import CartDrawer from '@/components/CartDrawer';
-import BottomNav from '@/components/BottomNav';
-import PageTransition from '@/components/PageTransition';
+import SiteChrome from '@/components/SiteChrome';
 import MotionProvider from '@/components/MotionProvider';
 import TelegramProvider from '@/components/TelegramProvider';
 import TelegramShell from '@/components/TelegramShell';
@@ -65,13 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             >
               Перейти к содержимому
             </a>
-            <Header />
-            <CartDrawer />
-            <main id="main-content" className="flex-1 pb-20 md:pb-0">
-              <PageTransition>{children}</PageTransition>
-            </main>
-            <Footer />
-            <BottomNav />
+            <SiteChrome>{children}</SiteChrome>
           </FavoritesProvider>
           </CartProvider>
           </TelegramProvider>
