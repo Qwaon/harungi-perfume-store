@@ -38,3 +38,8 @@ next-env.d.ts
 CLAUDE.md
 ROADMAP.md
 .superpowers/
+
+# рабочие данные для генерации fragrance-reference.json
+/frangastic.csv
+/frangastic_ru.csv
+/scripts/__pycache__/

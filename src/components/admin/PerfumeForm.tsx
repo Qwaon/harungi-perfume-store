@@ -1,8 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ENUMS, MULTI_ENUMS } from '@/lib/admin/catalog-logic';
+
+type Suggestion = {
+  name: string;
+  brand: string;
+  gender: string;
+  scentType: string | null;
+  notesTop: string;
+  notesMiddle: string;
+  notesBase: string;
+};
 
 type Row = Record<string, unknown>;
 
@@ -44,6 +54,41 @@ export default function PerfumeForm({ initial, id }: { initial?: Row; id?: strin
   );
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [suggestField, setSuggestField] = useState<'name' | 'brand' | null>(null);
+  const suggestTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const fetchSuggestions = (field: 'name' | 'brand', query: string) => {
+    if (suggestTimer.current) clearTimeout(suggestTimer.current);
+    if (id || query.trim().length < 2) { setSuggestions([]); setSuggestField(null); return; }
+    suggestTimer.current = setTimeout(async () => {
+      const res = await fetch(`/api/admin/catalog/suggest?q=${encodeURIComponent(query.trim())}`);
+      const d = await res.json().catch(() => ({}));
+      setSuggestions(Array.isArray(d.results) ? d.results : []);
+      setSuggestField(field);
+    }, 250);
+  };
+
+  const applySuggestion = (s: Suggestion) => {
+    setText((p) => ({
+      ...p,
+      name: s.name,
+      brand: s.brand,
+      notes_top: s.notesTop,
+      notes_middle: s.notesMiddle,
+      notes_base: s.notesBase,
+    }));
+    if (s.gender && (ENUMS.gender ?? []).includes(s.gender)) {
+      setEnums((p) => ({ ...p, gender: s.gender }));
+    }
+    if (s.scentType && (ENUMS.scentType ?? []).includes(s.scentType)) {
+      setEnums((p) => ({ ...p, scentType: s.scentType as string }));
+    }
+    setSuggestions([]);
+    setSuggestField(null);
+  };
+
+  useEffect(() => () => { if (suggestTimer.current) clearTimeout(suggestTimer.current); }, []);
 
   const toggleMulti = (field: string, val: string) =>
     setMulti((p) => ({ ...p, [field]: p[field].includes(val) ? p[field].filter((x) => x !== val) : [...p[field], val] }));
@@ -90,9 +135,37 @@ export default function PerfumeForm({ initial, id }: { initial?: Row; id?: strin
   return (
     <div className="flex flex-col gap-4 max-w-xl">
       {TEXT_FIELDS.map(([k, label]) => (
-        <label key={k} className="block">
+        <label key={k} className="block relative">
           <span className="label text-ink-500 block mb-1">{label}</span>
-          <input value={text[k]} onChange={(e) => setText((p) => ({ ...p, [k]: e.target.value }))} className="input-base" />
+          <input
+            value={text[k]}
+            onChange={(e) => {
+              const v = e.target.value;
+              setText((p) => ({ ...p, [k]: v }));
+              if (k === 'name' || k === 'brand') fetchSuggestions(k, v);
+            }}
+            onFocus={() => { if ((k === 'name' || k === 'brand') && text[k].trim().length >= 2) fetchSuggestions(k, text[k]); }}
+            onBlur={() => setTimeout(() => setSuggestions([]), 150)}
+            className="input-base"
+            autoComplete="off"
+          />
+          {(k === 'name' || k === 'brand') && suggestField === k && suggestions.length > 0 && (
+            <ul className="absolute z-10 left-0 right-0 mt-1 max-h-64 overflow-auto rounded-lg border border-cream-200 bg-cream-50 shadow-lg">
+              {suggestions.map((s, i) => (
+                <li key={i}>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => applySuggestion(s)}
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-cream-200 flex flex-col"
+                  >
+                    <span className="text-ink-900">{s.name}</span>
+                    <span className="text-xs text-ink-300">{s.brand} · {s.gender}{s.scentType ? ` · ${s.scentType}` : ''}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </label>
       ))}
       <div className="grid grid-cols-2 gap-3">
