@@ -19,20 +19,36 @@ export default function Hero() {
       className="relative min-h-dvh flex items-center overflow-hidden"
       style={{ background: 'linear-gradient(135deg, #0A0A0A 0%, #1c1a17 60%, #0A0A0A 100%)' }}
     >
+      {/* Фоновое видео: blur + scale (чтобы размытые края не открывали фон) */}
+      <video
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+        style={{ filter: 'blur(6px)', transform: 'scale(1.1)' }}
+        autoPlay
+        loop
+        muted
+        playsInline
+        poster="/hero-poster.jpg"
+        aria-hidden="true"
+      >
+        <source src="/hero-bg.mp4" type="video/mp4" />
+      </video>
+
+      {/* Затемнение для читаемости текста */}
+      <div className="absolute inset-0 bg-black/50" aria-hidden="true" />
+
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 pt-32 pb-24 w-full">
         <motion.h1
-          className="font-display text-[3rem] sm:text-6xl md:text-7xl xl:text-[7rem] font-light leading-[1.02] text-white mb-10 max-w-3xl text-balance"
+          className="font-display text-[3rem] sm:text-6xl md:text-7xl xl:text-[7rem] font-light leading-[1.05] text-white mb-10 max-w-3xl text-balance"
           variants={fadeUp}
           initial="hidden"
           animate="show"
           custom={0}
         >
-          Нишевая<br />
-          <span className="italic text-cream-300">парфюмерия</span>
+          Найди аромат,<br />
+          <span className="italic text-cream-300">который запомнят</span>
         </motion.h1>
 
         <motion.div
-          className="mb-20"
           variants={fadeUp}
           initial="hidden"
           animate="show"
@@ -44,28 +60,8 @@ export default function Hero() {
             className="inline-flex items-center justify-center gap-2 bg-cream-50 text-ink-900 px-8 py-3.5 text-sm tracking-widest uppercase font-medium rounded-full transition-all duration-200 hover:bg-white hover:-translate-y-px cursor-pointer"
             style={{ boxShadow: '0px 0px 0px 1px rgba(209,207,197,0.3)' }}
           >
-            Смотреть каталог
+            Перейти в каталог
           </Link>
-        </motion.div>
-
-        <motion.div
-          className="flex flex-wrap gap-x-6 gap-y-5 sm:gap-12 border-t border-white/10 pt-8"
-          variants={fadeUp}
-          initial="hidden"
-          animate="show"
-          custom={2}
-        >
-          {[
-            { value: '200+', label: 'Ароматов' },
-            { value: '20+', label: 'Брендов' },
-            { value: 'от 5 мл', label: 'Распивы' },
-            { value: '100%', label: 'Оригинал' },
-          ].map((stat) => (
-            <div key={stat.label} className="whitespace-nowrap">
-              <p className="font-display text-2xl sm:text-4xl font-light text-white tabular-nums">{stat.value}</p>
-              <p className="label text-cream-300/40 mt-1">{stat.label}</p>
-            </div>
-          ))}
         </motion.div>
       </div>
 
